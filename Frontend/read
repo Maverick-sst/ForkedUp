@@ -1,0 +1,5 @@
+/user/register---> user registered-->home.jsx(redirection)
+/user/login ---> user logged in--->home.jsx (red)
+
+/foodpartner/register---> partner registered---->dashboard (red)
+/foodpartner/login---> partner logged in

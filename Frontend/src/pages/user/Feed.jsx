@@ -1,0 +1,271 @@
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import {
+  FaHome,
+  FaUser,
+  FaHeart,
+  FaShareAlt,
+  FaCommentDots,
+  FaBookmark,
+} from "react-icons/fa";
+import { ArrowLeft, Play, Pause } from "lucide-react";
+
+function Feed() {
+  const videoRefs = useRef(new Map());
+  const [videos, setVideos] = useState([]);
+  const [isVideoPaused, setisVideoPaused] = useState(false);
+  const [isActiveVideoId, setIsActiveVideoId] = useState(null);
+  const [isIconDisplayed, setIsIconDisplayed] = useState(false);
+  // Fetch videos once on mount
+  useEffect(() => {
+    axios
+      .get("http://localhost:8000/api/food/", { withCredentials: true })
+      .then((response) => {
+        if (response.data && response.data.foodItems) {
+          setVideos(response.data.foodItems);
+        } else {
+          setVideos([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch videos:", err);
+        setVideos([]);
+      });
+  }, []);
+
+  // Observe videos after they are rendered
+  useEffect(() => {
+    if (videos.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          if (!(video instanceof HTMLVideoElement)) return;
+
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            video.play().catch(() => {});
+            setIsActiveVideoId(video.dataset.id);
+            setisVideoPaused(false);
+          } else {
+            video.pause();
+            setisVideoPaused(true);
+
+          }
+        });
+      },
+      { threshold: [0.6] }
+    );
+
+    videoRefs.current.forEach((video) => {
+      observer.observe(video);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [videos]);
+
+  function handleClick() {
+    if (!isActiveVideoId) return;
+    const activeVideo = videoRefs.current.get(isActiveVideoId);
+    if (!activeVideo) return;
+    if (isVideoPaused) {
+      activeVideo.play();
+      setisVideoPaused(false);
+      setIsIconDisplayed(true);
+      setTimeout(() => {
+        setIsIconDisplayed(false);
+      }, 500);
+    } else {
+      activeVideo.pause();
+      setisVideoPaused(true);
+      setIsIconDisplayed(true);
+      setTimeout(() => {
+        setIsIconDisplayed(false);
+      }, 500);
+    }
+  }
+  async function handleLike(videoId,currentLikeStatus){
+    if(!isActiveVideoId)return;
+    setVideos((currentVideos)=>currentVideos.map((video)=>
+    video._id===videoId?{...video, likedByUser: !video.likedByUser} : video));
+
+    try {
+      if(currentLikeStatus){
+        await axios.delete("http://localhost:8000/api/feature/like",{
+          data: { videoId: videoId },
+          withCredentials: true
+        });
+        console.log("Video disliked:", currentLikeStatus);
+      }
+      else{
+        await axios.post("http://localhost:8000/api/feature/like",{
+          videoId: videoId
+        },{
+          withCredentials: true
+        });
+        console.log("Video liked:", currentLikeStatus);
+      }
+      }catch (error) {
+      console.log(error);
+      // Revert UI state if API call fails
+      setVideos((currentVideos) => {
+          currentVideos.map((video) => {
+          video._id===videoId ?
+          {...video, likedByuser : video.likedByUser}:video;
+        });
+      });
+    }
+  }
+  async function handleSave(videoId,currentSaveStatus){
+    if(!isActiveVideoId)return;
+    setVideos((currentVideos)=>currentVideos.map((video)=>
+    video._id===videoId?{...video, savedByUser: !video.savedByUser} : video));
+
+    try {
+      if(currentSaveStatus){
+        await axios.delete("http://localhost:8000/api/feature/save",{
+          data: { videoId: videoId },
+          withCredentials: true
+        });
+        console.log("Video removed from watchlist:", currentSaveStatus);
+      }
+      else{
+        await axios.post("http://localhost:8000/api/feature/save",{
+          videoId: videoId
+        },{
+          withCredentials: true
+        });
+        console.log("Video added to watchlist:", currentSaveStatus);
+      }
+      }catch (error) {
+      console.log(error);
+      // Revert UI state if API call fails
+      setVideos((currentVideos) => {
+          currentVideos.map((video) => {
+          video._id===videoId ?
+          {...video, savedByUser : video.savedByUser}:video;
+        });
+      });
+    }
+  }
+  return (
+    <div onClick={handleClick} className="relative h-screen overflow-hidden">
+      {/* Backspace icon - sticky positioned */}
+      <Link to={"/"}>
+        <div className="fixed top-8 left-4 z-20">
+          <ArrowLeft size={30} className="text-white" />
+        </div>
+      </Link>
+      <div
+        style={{
+          height: "100vh",
+          overflowY: "scroll",
+          scrollSnapType: "y mandatory",
+        }}
+      >
+        {videos.map((item) => (
+          <section
+            key={item._id}
+            style={{
+              height: "100vh",
+              width: "100%",
+              position: "relative",
+              scrollSnapAlign: "start",
+            }}
+          >
+            {/* {Pause & Play} */}
+            {isIconDisplayed && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-500 ease-in-out">
+                {isVideoPaused ? (
+                  <Play size={60} className="text-white" />
+                ) : (
+                  <Pause size={60} className=" text-white" />
+                )}
+              </div>
+            )}
+
+            {/* Reel video */}
+            <video
+              ref={(el) => {
+                if (el) videoRefs.current.set(item._id, el);
+                else videoRefs.current.delete(item._id);
+              }}
+              src={item.video}
+              muted
+              playsInline
+              loop
+              preload="metadata"
+              data-id={item._id}
+              onPause={()=>{setisVideoPaused(true)}}
+              onPlay={()=>{setisVideoPaused(false)}}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+
+            {/* Right-side action buttons */}
+            <div className="absolute right-4 bottom-70 flex flex-col gap-5 items-center text-white">
+              <button onClick={(e)=>{
+                e.stopPropagation();
+                handleLike(item._id,item.likedByUser)}} 
+              className="p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition">
+               {item.likedByUser ?  <FaHeart size={20} color="red"/> :  <FaHeart size={20} color="white"/>}
+              </button>
+              <button 
+              className="p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition">
+                <FaShareAlt size={20} />
+              </button>
+              <button className="p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition">
+                <FaCommentDots size={20} />
+              </button>
+              <button onClick={(e)=>{
+                e.stopPropagation();
+                handleSave(item._id,item.savedByUser)
+              }}
+              className="p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition">
+                {item.savedByUser ? <FaBookmark size={20} color="red" /> : <FaBookmark size={20} color="white"/>}
+              </button>
+            </div>
+
+            {/* Bottom info + buttons */}
+            <div className="absolute bottom-12  w-full px-4 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/40 backdrop-blur-md border border-white/30"></div>
+                <div className="px-4 py-2 rounded-xl bg-white/40 backdrop-blur-md border border-white/30 text-white font-body text-sm">
+                  {item.description || "food-descrip"}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button className="flex-1 py-2 rounded-xl bg-brand-green text-white font-heading shadow hover:opacity-90">
+                  Buy
+                </button>
+                <Link
+                  to={"/food-partner/" + item.foodPartner}
+                  className="flex-1"
+                >
+                  <button className="w-full py-2 rounded-xl bg-brand-orange text-white font-heading shadow hover:bg-brand-peach">
+                    Explore
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
+
+      {/* Sticky bottom navigation bar */}
+      <div className="fixed bottom-0 w-full px-8 py-2 flex justify-between items-center bg-black/30 backdrop-blur-md z-10">
+        <Link to={"/"}>
+          <FaHome size={24} className="text-white" />
+        </Link>
+        <Link to={"/profile"}>
+          <FaUser size={24} className="text-white" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+export default Feed;
