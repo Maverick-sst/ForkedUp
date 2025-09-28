@@ -7,27 +7,55 @@ import axios from "axios";
 function Profile() {
   const [activeBtn, setActiveBtn] = useState("liked"); // default tab
   const [likedReels, setlikedReels] = useState([]);
-  const [savedReels,setSavedReels] = useState([]);
+  const [savedReels, setSavedReels] = useState([]);
 
   const videoRefs = useRef(new Map());
   // fetching reels upon mount
   useEffect(() => {
-    axios
-      .get("http://localhost:8000/api/food/user/likedreels?page=1&limit=15", {
-        withCredentials: true,
-      })
-      .then((response) => {
-        if (response.data && response.data.reels) {
-          setlikedReels(response.data.reels);
-          
-        } else {
-          setlikedReels([]);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
+    switch (activeBtn) {
+      case "liked":
+        axios
+          .get(
+            "http://localhost:8000/api/food/user/likedreels?page=1&limit=15",
+            {
+              withCredentials: true,
+            }
+          )
+          .then((response) => {
+            if (response.data && response.data.reels) {
+              setlikedReels(response.data.reels);
+            } else {
+              setlikedReels([]);
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+        break;
+      case "savedreels":
+        console.log("savedreels selected")
+        axios
+          .get(
+            "http://localhost:8000/api/food/user/savedreels?page=1&limit=15",
+            {
+              withCredentials: true,
+            }
+          )
+          .then((response) => {
+            if (response.data && response.data.reels) {
+              setSavedReels(response.data.reels);
+            } else {
+              setSavedReels([]);
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+        break;
+      case "orders":
+        break;
+    }
+  }, [activeBtn]);
 
   // to display reels in required grid
 
@@ -92,7 +120,7 @@ function Profile() {
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-4 pb-20">
-        {activeBtn === "liked" ? (
+        {activeBtn === "liked" && (
           // likedReels
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
             {likedReels.map((item) => (
@@ -118,10 +146,35 @@ function Profile() {
               </div>
             ))}
           </div>
-        ) : (
-          // order section
-          <div></div>
         )}
+        {activeBtn === "savedreels" && (
+          // savedReels
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+            {savedReels.map((item) => (
+              <div key={item._id.toString()} className="aspect-w-9 aspect-h-16">
+                <div className="w-full h-full bg-gray-200 rounded-lg">
+                  <video
+                    ref={(el) => {
+                      if (el) videoRefs.current.set(item._id, el);
+                      else videoRefs.current.delete(item._id);
+                    }}
+                    src={item.video} // backend field is `video`
+                    muted
+                    playsInline
+                    loop
+                    preload="metadata"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {activeBtn === "orders" && <div>no orders yet!</div>}
       </div>
 
       {/* Bottom navigation */}
