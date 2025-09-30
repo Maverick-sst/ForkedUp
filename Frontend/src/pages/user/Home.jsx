@@ -1,11 +1,33 @@
-import React from "react";
+import React, { useState,useEffect } from "react";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import { Link } from "react-router-dom";
 import { FaHome, FaUser } from "react-icons/fa";
-
+import axios from "axios";
 function Home() {
-  const { location, status, requestLocation, clearLocation } = useGeoLocation();
+  const { location, status, requestLocation } = useGeoLocation();
+  const [address, setAddress] = useState("");
 
+  useEffect(() => {
+    if (status === "ready" && location) {
+      axios
+        .post(
+          "http://localhost:8000/api/location",
+          {
+            coords: location,
+          },
+          {
+            withCredentials: true,
+          }
+        )
+        .then((res) => {
+          if (!res) return;
+          setAddress(res.data.address);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, [location, status]);
   return (
     <div className="relative h-screen w-full bg-white text-black overflow-hidden">
       {/* Background overlay video */}
@@ -22,24 +44,24 @@ function Home() {
         {/* Top bar: location + user profile */}
         <div className="flex justify-between items-center px-4 py-4 bg-white/70 backdrop-blur-md rounded-b-xl shadow">
           <div className="text-sm px-3 py-1 rounded-lg border">
-          {status === "ready" && location
-            ? `${location.lat.toFixed(2)}, ${location.lng.toFixed(2)}`
-            : status === "loading"
-            ? "Detecting..."
-            : status === "denied"
-            ? "Location blocked"
-            : "Set location"}
-        </div>
+            {status === "ready" && address
+              ? address
+              : status === "loading"
+              ? "Detecting..."
+              : status === "denied"
+              ? "Location blocked"
+              : "Set location"}
+            {status !== "ready" && (
+              <button
+                onClick={requestLocation}
+                className="px-3 py-1 rounded bg-brand-orange text-white"
+              >
+                Allow Location
+              </button>
+            )}
+          </div>
 
-        <button
-          onClick={requestLocation}
-          className="px-3 py-1 rounded bg-brand-orange text-white"
-        >
-          Allow location
-        </button>
-          <Link to="/profile">
-            Hey,Username
-          </Link>
+          <Link to="/profile">Hey,Username</Link>
         </div>
 
         {/* Search bar */}
