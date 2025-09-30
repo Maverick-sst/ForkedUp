@@ -23,7 +23,6 @@ router.post(
 
 // GET /api/food/{protected}----user
 router.get("/", authUserMiddleware, foodController.getFoodItems);
-module.exports = router;
 
 // GET /api/food/user/:id/likedreels?page=1&limit=20----user bef
 // GET /api/food/user/likedreels?page=1&limit=20----user after
@@ -31,3 +30,6 @@ router.get("/user/likedreels",authUserMiddleware,likedReelsController)
 
 // GET /api/food/user/savedreels?page=1&limit=20----user 
 router.get("/user/savedreels",authUserMiddleware,savedReelsController)
+
+module.exports = router;
+
