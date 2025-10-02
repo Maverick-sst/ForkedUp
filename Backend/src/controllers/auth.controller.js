@@ -65,7 +65,10 @@ async function loginUser(req, res) {
   }
 
   // Generate JWT token
-  const token = jwt.sign({ id: user._id }, process.env.secret_key);
+  const token = jwt.sign(
+    { id: user._id, role: "user" },
+    process.env.secret_key
+  );
   res.cookie("token", token);
 
   return res.status(200).json({
@@ -147,13 +150,19 @@ async function loginFoodPartner(req, res) {
   }
 
   // Compare password (await bcrypt.compare)
-  const isCorrectPassword = await bcrypt.compare(password, foodPartner.password);
+  const isCorrectPassword = await bcrypt.compare(
+    password,
+    foodPartner.password
+  );
   if (!isCorrectPassword) {
     return res.status(401).json({ message: "Invalid Credentials" });
   }
 
   // Generate JWT token for the food partner
-  const token = jwt.sign({ id: foodPartner._id }, process.env.secret_key);
+  const token = jwt.sign(
+    { id: foodPartner._id, role: "foodpartner" },
+    process.env.secret_key
+  );
   res.cookie("token", token);
 
   return res.status(200).json({

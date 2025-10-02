@@ -1,4 +1,5 @@
 const mongoose=require('mongoose');
+const locationSchema = require('./location.model');
 
 const foodPartnerSchema = new mongoose.Schema(
   {
@@ -19,6 +20,7 @@ const foodPartnerSchema = new mongoose.Schema(
     password: {
       type: String,
     },
+    location:locationSchema
   },
   {
     timestamps: true,

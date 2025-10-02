@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const locationModel = require("./location.model");
 
 const userSchema = new mongoose.Schema(
   {
@@ -6,10 +7,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    userName : {
+    userName: {
       type: String,
       required: true,
-      unique:true,
+      unique: true,
     },
     email: {
       type: String,
@@ -19,6 +20,18 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
     },
+    addresses: [
+      {
+        label: {
+          type: String,
+          enum: ["home", "work", "other"],
+          default: "other",
+        },
+        location: locationModel,
+      },
+    ],
+
+    defaultAddress: { type: Number, default: 0 }, // index in addresses array
   },
   {
     timestamps: true,
