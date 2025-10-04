@@ -18,11 +18,12 @@ async function authMiddleware(req, res, next) {
     let user;
     if (role === "user") {
       user = await userModel.findById(id);
+      req.user = user;
     } else if (role === "foodpartner") {
       user = await foodPartnerModel.findById(decoded.id);
+      req.foodPartner = user;
     }
 
-    req.user = user;
     req.role = role;
     next();
   } catch (error) {

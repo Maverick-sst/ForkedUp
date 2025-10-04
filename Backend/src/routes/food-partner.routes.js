@@ -6,4 +6,6 @@ const { authMiddleware } = require("../middlewares/auth.middleware");
 // GET /api/food-partner/:id {protected}----user
 router.get("/:id", authMiddleware, foodPartnerController.getFoodItemsByPartner);
 
+// PATCH /api/food-partner/profile---- food-partner
+router.patch("/profile",authMiddleware,foodPartnerController.updateProfile)
 module.exports = router;

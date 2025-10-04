@@ -1,10 +1,4 @@
-async function getFormattedAddress(coords) {
-  const { lat, lng } = coords;
-
-  if (!coords || !lat || !lng) {
-    return 400;
-  }
-
+async function getFormattedAddress(lat, lng) {
   const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}%2C+${lng}&key=${process.env.OPENCAGE_KEY}`;
   
   try {

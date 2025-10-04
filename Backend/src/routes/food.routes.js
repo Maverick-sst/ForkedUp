@@ -4,19 +4,9 @@ const { authMiddleware } = require("../middlewares/auth.middleware");
 const likedReelsController = require("../controllers/UserProfileController/likedreels.controller.js");
 const savedReelsController = require("../controllers/UserProfileController/savedreels.controller.js");
 const router = express.Router();
-const multer = require("multer");
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-});
 
 // POST /api/food/{protected}---partner
-router.post(
-  "/",
-  authMiddleware,
-  upload.single("video"),
-  foodController.createFood
-);
+router.post("/", authMiddleware, foodController.createFood);
 
 // GET /api/food/{protected}----user
 router.get("/", authMiddleware, foodController.getFoodItems);

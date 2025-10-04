@@ -1,30 +1,34 @@
 const foodModel = require("../models/food.model");
-const storageService = require("../services/storage.service");
-const { v4: uuid } = require("uuid");
 const mongoose = require("mongoose");
 
 async function createFood(req, res) {
   try {
-    // Basic server‑side validation
     if (!req.body.name) {
       return res.status(400).json({ error: "Food name is required." });
     }
-    if (!req.file) {
+    if (!req.body.video) {
       return res.status(400).json({ error: "Food video file is required." });
     }
-
-    // Upload the video file
-    const fileUploadResult = await storageService.uploadFile(
-      req.file.buffer,
-      uuid()
-    );
-
+    const {
+      name,
+      video,
+      description,
+      price,
+      category,
+      dietaryPreference,
+      cuisine,
+    } = req.body;
+    const foodPartner = req.foodPartner._id;
     // Create the food document
     const foodItem = await foodModel.create({
-      name: req.body.name,
-      video: fileUploadResult.url,
-      description: req.body.description,
-      foodPartner: req.foodPartner._id,
+      name: name,
+      video: video,
+      description: description,
+      price: price,
+      category: category,
+      dietaryPreference: dietaryPreference,
+      cuisine: cuisine,
+      foodPartner: foodPartner,
     });
 
     // Respond with the created item

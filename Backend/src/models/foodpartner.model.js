@@ -1,16 +1,20 @@
-const mongoose=require('mongoose');
-const locationSchema = require('./location.model');
+const mongoose = require("mongoose");
+const locationSchema = require("./location.model");
 
 const foodPartnerSchema = new mongoose.Schema(
   {
+    profilePhoto: {
+      type: String,
+      required: true,
+    },
     name: {
       type: String,
       required: true,
     },
-    userName : {
+    userName: {
       type: String,
       required: true,
-      unique:true,
+      unique: true,
     },
     email: {
       type: String,
@@ -19,12 +23,43 @@ const foodPartnerSchema = new mongoose.Schema(
     },
     password: {
       type: String,
+      required: true,
     },
-    location:locationSchema
+    phoneNo: {
+      type: String,
+      required: true,
+    },
+    location: locationSchema,
+    workingHours: [
+      {
+        dayofWeek: {
+          type: Number,
+          required: true,
+          min: 0,
+          max: 6,
+        },
+        isOpen: {
+          type: Boolean,
+          default: true, // Assume open if the day is listed
+        },
+        periods: [
+          {
+            openTime: {
+              type: String, // Store as "HH:MM" in 24-hour format (e.g., "09:00" or "14:30")
+              required: true,
+            },
+            closeTime: {
+              type: String,
+              required: true,
+            },
+          },
+        ],
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
-const foodPartnerModel=mongoose.model("foodPartner", foodPartnerSchema)
+const foodPartnerModel = mongoose.model("foodPartner", foodPartnerSchema);
 module.exports = foodPartnerModel;
