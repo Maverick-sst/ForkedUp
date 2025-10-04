@@ -1,27 +1,31 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import { Link } from "react-router-dom";
 import { FaHome, FaUser } from "react-icons/fa";
 import axios from "axios";
 function Home() {
   const { location, status, requestLocation } = useGeoLocation();
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState(() => {
+    const savedAddress = localStorage.getItem("userAddress");
+    return savedAddress || "";
+  });
+
+  useEffect(() => {
+    if (!address && status!=="denied") {
+      requestLocation();
+    }
+  }, [address, requestLocation]);
 
   useEffect(() => {
     if (status === "ready" && location) {
       axios
-        .post(
-          "http://localhost:8000/api/location",
-          {
-            coords: location,
-          },
-          {
-            withCredentials: true,
-          }
+        .get(
+          `http://localhost:8000/api/location/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
         )
         .then((res) => {
           if (!res) return;
           setAddress(res.data.address);
+          localStorage.setItem("userAddress", res.data.address);
         })
         .catch((err) => {
           console.log(err);
@@ -44,7 +48,7 @@ function Home() {
         {/* Top bar: location + user profile */}
         <div className="flex justify-between items-center px-4 py-4 bg-white/70 backdrop-blur-md rounded-b-xl shadow">
           <div className="text-sm px-3 py-1 rounded-lg border">
-            {status === "ready" && address
+            {status === "ready" || address
               ? address
               : status === "loading"
               ? "Detecting..."
@@ -56,7 +60,7 @@ function Home() {
                 onClick={requestLocation}
                 className="px-3 py-1 rounded bg-brand-orange text-white"
               >
-                Allow Location
+                Set Location
               </button>
             )}
           </div>

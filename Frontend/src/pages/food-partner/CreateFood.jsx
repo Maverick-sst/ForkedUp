@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function CreateFood() {
+function CreateFood(){
   const [formData, setFormData] = useState({
     name: '',
     video: '',
