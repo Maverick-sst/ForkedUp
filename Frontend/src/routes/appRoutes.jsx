@@ -10,8 +10,7 @@ import Profile from "../pages/user/Profile"
 import Dashboard from "../pages/food-partner/Dashboard"
 import CreateFood from "../pages/food-partner/CreateFood"
 import FoodPartnerProfile from "../pages/user/FoodPartnerProfile";
-import partnerProfile from "../pages/food-partner/partnerProfile";
-
+import PartnerProfile from "../pages/food-partner/partnerProfile"
 
 const AppRoutes=()=>{
     return(
@@ -27,8 +26,8 @@ const AppRoutes=()=>{
 
                 <Route path="/dashboard" element={<Dashboard/>} />
                 <Route path="/add-food" element={<CreateFood/>} />
-                <Route path="/food-partner/:id" element={<FoodPartnerProfile/>} />
-                <Route path="/profile/edit" element={<partnerProfile/>}/>
+                <Route path="/food-partner/:id" element={<FoodPartnerProfile/>} /> 
+                <Route path="/food-partner/profile/edit" element={<PartnerProfile/>}/>
             </Routes>
         </Router>
     )

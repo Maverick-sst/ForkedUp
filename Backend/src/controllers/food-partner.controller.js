@@ -32,7 +32,7 @@ async function updateProfile(req, res) {
       { new: true, runValidators: true }
     );
     if (!updatedPartner) {
-      res.status(404).json({
+      return res.status(404).json({
         message: "Food Partner not Found",
       });
     }
