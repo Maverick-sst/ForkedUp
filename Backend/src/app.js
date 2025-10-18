@@ -17,13 +17,6 @@ app.use(
     credentials: true,
   })
 );
-app.get("/", (req, res) => {
-  res.send("<h1>Hello</h1>");
-});
-
-app.get("/home", (req, res) => {
-  res.send("<h1>This is home again welcomes you</h1>");
-});
 
 app.use("/api/auth/", authRoutes);
 app.use("/api/upload/",uploadRoutes)

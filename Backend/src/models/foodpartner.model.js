@@ -5,7 +5,6 @@ const foodPartnerSchema = new mongoose.Schema(
   {
     profilePhoto: {
       type: String,
-      required: true,
     },
     name: {
       type: String,
@@ -27,7 +26,6 @@ const foodPartnerSchema = new mongoose.Schema(
     },
     phoneNo: {
       type: String,
-      required: true,
     },
     location: locationSchema,
     workingHours: [

@@ -20,7 +20,7 @@ async function authMiddleware(req, res, next) {
       user = await userModel.findById(id);
       req.user = user;
     } else if (role === "foodpartner") {
-      user = await foodPartnerModel.findById(decoded.id);
+      user = await foodPartnerModel.findById(id);
       req.foodPartner = user;
     }
 

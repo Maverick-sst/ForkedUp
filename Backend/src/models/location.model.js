@@ -8,10 +8,6 @@ const locationSchema = new mongoose.Schema(
       required: true,
       default: "Point",
     },
-    coordinates: {
-      type: [Number], // [lng, lat]
-      required: true,
-    },
     address: {
       formatted:{type:String},
       street: { type: String },

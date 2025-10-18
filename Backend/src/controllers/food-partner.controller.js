@@ -16,9 +16,32 @@ async function getFoodItemsByPartner(req, res) {
     foodReels,
   });
 }
-
+async function getMyDetails(req,res){
+  const foodPartnerId=req.foodPartner._id;
+  if(!foodPartnerId){
+    return res.status(401).json({
+      message:"Unauthorized access"
+    })
+  }
+  try {
+    const foodPartner = await foodPartnerModel.findById(foodPartnerId).select('-password');
+    if(!foodPartner){
+      return res.status(404).json({
+        message:"No Such Partner Found"
+      })
+    }
+    return res.status(200).json({
+      message: "Profile fetched successfully",
+      foodPartner
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message:"Internal Server Error"
+    })
+  }
+}
 async function updateProfile(req, res) {
-  const foodPartnerId = req.user._id;
+  const foodPartnerId = req.foodPartner._id;
   const updates = req.body;
   if (!foodPartnerId) {
     return res.status(401).json({
@@ -47,4 +70,4 @@ async function updateProfile(req, res) {
     });
   }
 }
-module.exports = { getFoodItemsByPartner, updateProfile };
+module.exports = { getFoodItemsByPartner,getMyDetails, updateProfile };
