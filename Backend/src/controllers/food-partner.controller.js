@@ -17,12 +17,13 @@ async function getFoodItemsByPartner(req, res) {
   });
 }
 async function getMyDetails(req,res){
-  const foodPartnerId=req.foodPartner._id;
-  if(!foodPartnerId){
+  if (!req.foodPartner) {
     return res.status(401).json({
       message:"Unauthorized access"
     })
   }
+  
+  const foodPartnerId = req.foodPartner._id;
   try {
     const foodPartner = await foodPartnerModel.findById(foodPartnerId).select('-password');
     if(!foodPartner){
@@ -41,13 +42,14 @@ async function getMyDetails(req,res){
   }
 }
 async function updateProfile(req, res) {
-  const foodPartnerId = req.foodPartner._id;
-  const updates = req.body;
-  if (!foodPartnerId) {
+  if (!req.foodPartner) {
     return res.status(401).json({
       message: "Unauthorized Access",
     });
   }
+  
+  const foodPartnerId = req.foodPartner._id;
+  const updates = req.body;
   try {
     const updatedPartner = await foodPartnerModel.findByIdAndUpdate(
       foodPartnerId,

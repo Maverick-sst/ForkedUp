@@ -18,9 +18,19 @@ async function authMiddleware(req, res, next) {
     let user;
     if (role === "user") {
       user = await userModel.findById(id);
+      if (!user) {
+        return res.status(401).json({
+          message: "User not found",
+        });
+      }
       req.user = user;
     } else if (role === "foodpartner") {
       user = await foodPartnerModel.findById(id);
+      if (!user) {
+        return res.status(401).json({
+          message: "Food partner not found",
+        });
+      }
       req.foodPartner = user;
     }
 

@@ -94,7 +94,6 @@ function PartnerProfile() {
     getFormattedAddress();
   }, [location]);
 
-  // const handleInputChange = (e) => { /* ... logic to update nested state ... */ };
   const handleImageUpload = () => {
     fileInputRef.current.click();
   };
@@ -229,7 +228,7 @@ function PartnerProfile() {
       <div className="bg-white shadow-sm sticky top-0 z-10 p-4 flex items-center">
         <button
           onClick={() => {
-            navigate(-1)
+            navigate(-1);
           }}
           className="text-brand-gray mr-4"
         >
