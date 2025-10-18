@@ -101,7 +101,7 @@ function Dashboard() {
   // --- LOGIC TO BE ADDED ---
   // You will replace this with a real state based on fetched user data.
   // For now, you can toggle it between `true` and `false` to see both UI states.
-  const [isProfileComplete, setIsProfileComplete] = useState(true); 
+  const [isProfileComplete, setIsProfileComplete] = useState(false); 
   const username = "Maverick"; // This will also come from your data fetch.
 
   return (
