@@ -1,6 +1,7 @@
 const foodModel = require("../models/food.model");
 const Like = require("../models/Features/likes.model");
 const saveSchemaModel = require("../models/Features/save.model");
+const commentModel = require("../models/Features/comments.model");
 
 async function like(req, res) {
   const userId = req.user && req.user._id;
@@ -74,10 +75,13 @@ async function addToWatchlist(req, res) {
   }
 
   try {
-    const watchlistEntry = await saveSchemaModel.create({ user: userId, video: videoId });
+    const watchlistEntry = await saveSchemaModel.create({
+      user: userId,
+      video: videoId,
+    });
     return res.status(201).json({
       message: "Video added to watchlist successfully",
-      watchlist:watchlistEntry
+      watchlist: watchlistEntry,
     });
   } catch (err) {
     // Duplicate save (unique index) or other DB errors
@@ -118,4 +122,30 @@ async function removeFromWatchlist(req, res) {
   }
 }
 
-module.exports = { like, addToWatchlist, dislike, removeFromWatchlist };
+async function comment(req, res) {
+  const userId = req.user._id;
+  const foodId = req.params.foodId;
+  const { comment } = req.body;
+  if (!foodId) {
+    return res.status(401).json({
+      message: "Missing Food ID",
+    });
+  }
+  const commentMade = await commentModel.create({
+    comment: comment,
+    user: userId,
+    food: foodId,
+  });
+  await foodModel.findByIdAndUpdate(foodId, { $inc: { commentCount: 1 } });
+  return res.status(201).json({
+    message: "Commented Successfully",
+    data: commentMade,
+  });
+}
+module.exports = {
+  like,
+  addToWatchlist,
+  dislike,
+  removeFromWatchlist,
+  comment,
+};

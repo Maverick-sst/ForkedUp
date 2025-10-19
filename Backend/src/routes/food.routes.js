@@ -3,8 +3,12 @@ const foodController = require("../controllers/food.controller");
 const { authMiddleware } = require("../middlewares/auth.middleware");
 const likedReelsController = require("../controllers/UserProfileController/likedreels.controller.js");
 const savedReelsController = require("../controllers/UserProfileController/savedreels.controller.js");
+const { comment } = require("../controllers/feedfeatures.controller.js");
 const router = express.Router();
 
+
+// POST api/food/:foodId/comment ---- user
+router.post("/:foodId/comment",authMiddleware,comment)
 // POST /api/food/{protected}---partner
 router.post("/", authMiddleware, foodController.createFood);
 
