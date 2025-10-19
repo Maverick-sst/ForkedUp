@@ -23,13 +23,7 @@ const foodSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      enum: [
-        "Starter",
-        "Main Course",
-        "Dessert",
-        "Beverage",
-        "Siders"
-      ],
+      enum: ["Starter", "Main Course", "Dessert", "Beverage", "Siders"],
     },
     // For dietary information (e.g., veg, non-veg)
     dietaryPreference: {
@@ -52,11 +46,15 @@ const foodSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    commentCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
-const foodModel = mongoose.model("foodModel", foodSchema); 
+const foodModel = mongoose.model("foodModel", foodSchema);
 module.exports = foodModel;
