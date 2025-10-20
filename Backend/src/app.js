@@ -3,9 +3,10 @@ const cookieParser = require("cookie-parser");
 const authRoutes = require("../src/routes/auth.routes");
 const foodRoutes = require("../src/routes/food.routes");
 const uploadRoutes = require("../src/routes/upload.routes");
+const detailsRoutes = require("../src/routes/details.routes");
 const foodPartnerRoutes = require("../src/routes/food-partner.routes");
-const featureRoutes=require("./routes/features.routes")
-const locationRoutes=require("../src/routes/location.routes")
+const featureRoutes = require("./routes/features.routes");
+const locationRoutes = require("../src/routes/location.routes");
 const cors = require("cors");
 
 const app = express();
@@ -19,9 +20,10 @@ app.use(
 );
 
 app.use("/api/auth/", authRoutes);
-app.use("/api/upload/",uploadRoutes)
+app.use("/api/me", detailsRoutes);
+app.use("/api/upload/", uploadRoutes);
 app.use("/api/food/", foodRoutes);
 app.use("/api/food-partner/", foodPartnerRoutes);
-app.use("/api/feature/",featureRoutes );
-app.use("/api/location/",locationRoutes) //--- this will be used by both user and food-partner to quickly display form add on fronen
+app.use("/api/feature/", featureRoutes);
+app.use("/api/location/", locationRoutes); //--- this will be used by both user and food-partner to quickly display form add on fronen
 module.exports = app;
