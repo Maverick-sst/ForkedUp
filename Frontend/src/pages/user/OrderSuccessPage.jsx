@@ -1,0 +1,346 @@
+// Frontend/src/pages/user/OrderSuccessPage.jsx
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import axios from "axios";
+import {
+  FaClipboardCheck,
+  FaRegClock,
+  FaCheckCircle,
+  FaShippingFast,
+  FaHome,
+  FaBoxOpen,
+  FaTimesCircle,
+  FaUtensils,
+} from "react-icons/fa"; // Icons for status
+import { IoArrowBack } from "react-icons/io5";
+
+// Helper function to map status to UI details
+const getStatusDetails = (status) => {
+  switch (status) {
+    case "pending":
+      return {
+        text: "Waiting for partner to accept...",
+        icon: FaRegClock,
+        color: "text-yellow-500",
+        step: 1,
+      };
+    case "accepted":
+      return {
+        text: "Partner accepted your order!",
+        icon: FaCheckCircle,
+        color: "text-blue-500",
+        step: 2,
+      };
+    case "preparing":
+      return {
+        text: "Your food is being prepared...",
+        icon: FaUtensils,
+        color: "text-blue-500",
+        step: 2,
+      }; // Using utensils icon
+    case "ready_for_pickup": // Optional
+      return {
+        text: "Ready for pickup",
+        icon: FaBoxOpen,
+        color: "text-purple-500",
+        step: 3,
+      };
+    case "out_for_delivery":
+      return {
+        text: "Out for delivery!",
+        icon: FaShippingFast,
+        color: "text-purple-500",
+        step: 3,
+      };
+    case "delivered":
+      return {
+        text: "Order Delivered!",
+        icon: FaHome,
+        color: "text-green-500",
+        step: 4,
+      };
+    case "rejected":
+      return {
+        text: "Order Rejected by Partner",
+        icon: FaTimesCircle,
+        color: "text-red-500",
+        step: -1,
+      };
+    case "cancelled":
+      return {
+        text: "Order Cancelled",
+        icon: FaTimesCircle,
+        color: "text-red-500",
+        step: -1,
+      };
+    default:
+      return {
+        text: "Status Unknown",
+        icon: FaRegClock,
+        color: "text-gray-500",
+        step: 0,
+      };
+  }
+};
+
+const OrderStatusStep = ({ stepStatus, currentStep }) => {
+  const isActive = stepStatus.step > 0 && currentStep >= stepStatus.step;
+  const isFinalRejectedCancelled = stepStatus.step === -1 && currentStep === -1; // Special case for rejected/cancelled
+
+  return (
+    <div
+      className={`flex items-center gap-3 p-3 rounded-lg ${
+        isActive || isFinalRejectedCancelled
+          ? `${stepStatus.color
+              .replace("text-", "bg-")
+              .replace("-500", "-100")}`
+          : "bg-gray-100"
+      }`}
+    >
+      <div
+        className={`p-2 rounded-full ${
+          isActive || isFinalRejectedCancelled
+            ? `${stepStatus.color.replace("text-", "bg-")}`
+            : "bg-gray-300"
+        }`}
+      >
+        <stepStatus.icon
+          className={
+            isActive || isFinalRejectedCancelled
+              ? "text-white"
+              : "text-gray-500"
+          }
+          size={16}
+        />
+      </div>
+      <span
+        className={`text-sm font-medium ${
+          isActive || isFinalRejectedCancelled
+            ? stepStatus.color
+            : "text-gray-500"
+        }`}
+      >
+        {stepStatus.text}
+      </span>
+    </div>
+  );
+};
+
+function OrderSuccessPage() {
+  
+  const { orderId } = useParams(); // Get orderId from the URL
+  const navigate = useNavigate();
+  const [order, setOrder] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPolling, setIsPolling] = useState(false); // Tracks if polling is active
+  const [error, setError] = useState(null);
+
+  // clearCart()
+
+  // --- Function to fetch order details ---
+  const fetchOrderDetails = useCallback(
+    async (isInitialLoad = false) => {
+      // Don't set loading true for polls, only for initial load
+      if (isInitialLoad) {
+        setIsLoading(true);
+      }
+      setError(null); // Clear previous errors on fetch attempt
+      console.log(
+        `${
+          isInitialLoad ? "Fetching initial" : "Polling for"
+        } order ${orderId} status...`
+      );
+
+      if (!orderId) {
+        setError("No order ID provided.");
+        setIsLoading(false); // Ensure loading stops if no ID
+        return; // Stop fetching if no orderId
+      }
+
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/api/orders/${orderId}`,
+          { withCredentials: true }
+        );
+        setOrder(response.data.order || null);
+      } catch (err) {
+        console.error("Failed to fetch order details:", err);
+        // Set error, but don't clear order data on polling error, maybe show subtle error indicator
+        setError(
+          err.response?.data?.message ||
+            "Could not load order details. Retrying..."
+        );
+      } finally {
+        // Only set initial loading to false
+        if (isInitialLoad) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [orderId]
+  ); // Now only depends on orderId
+  const isFinalStatus =
+    order?.orderStatus === "delivered" ||
+    order?.orderStatus === "rejected" ||
+    order?.orderStatus === "cancelled";
+  // --- Polling Logic ---
+  useEffect(() => {
+    // Only start polling AFTER initial load completes and if status is not final
+    if (!isLoading && !isFinalStatus) {
+      setIsPolling(true); // Indicate polling is active
+      console.log("Polling started...");
+      const intervalId = setInterval(() => {
+        fetchOrderDetails(false); // Pass false for polling calls
+      }, 15000); // Poll every 15 seconds
+
+      // Cleanup function for this effect
+      return () => {
+        clearInterval(intervalId);
+        setIsPolling(false); // Indicate polling stopped
+        console.log("Polling stopped.");
+      };
+    } else if (isFinalStatus) {
+      // If status becomes final, ensure polling stops if it was somehow still running
+      setIsPolling(false);
+      console.log("Order reached final state, ensuring polling stops.");
+    }
+
+    // This effect depends on the initial loading state and whether the status is final
+  }, [isLoading, isFinalStatus, fetchOrderDetails]);
+
+  // --- Render Logic ---
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        Loading Order Details...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen p-4 text-center">
+        <h1 className="text-xl font-bold text-red-600 mb-4">Error</h1>
+        <p className="text-red-500 mb-4">{error}</p>
+        <button
+          onClick={() => navigate("/")}
+          className="px-6 py-2 bg-brand-orange text-white rounded"
+        >
+          Go Home
+        </button>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen p-4 text-center">
+        <h1 className="text-xl font-bold text-brand-gray mb-4">
+          Order Not Found
+        </h1>
+        <button
+          onClick={() => navigate("/")}
+          className="px-6 py-2 bg-brand-orange text-white rounded"
+        >
+          Go Home
+        </button>
+      </div>
+    );
+  }
+
+  // --- Get Current Status Details ---
+  const currentStatusDetails = getStatusDetails(order.orderStatus);
+  const orderSteps = [
+    getStatusDetails("pending"),
+    getStatusDetails("accepted"), // Combines accepted/preparing visually
+    getStatusDetails("out_for_delivery"), // Combines ready/out_for_delivery visually
+    getStatusDetails("delivered"),
+  ];
+  // If rejected/cancelled, show only that status
+  const displaySteps =
+    currentStatusDetails.step === -1 ? [currentStatusDetails] : orderSteps;
+
+  return (
+    <div className="min-h-screen bg-brand-offwhite font-body">
+      {/* Header */}
+      <div className="bg-white shadow-sm sticky top-0 z-10 p-4 flex items-center justify-center">
+        <button
+          onClick={() => navigate("/")}
+          className="absolute left-4 text-brand-gray"
+        >
+          {" "}
+          {/* Navigate Home or to Orders List */}
+          <IoArrowBack size={24} />
+        </button>
+        <h1 className="font-heading text-xl text-brand-gray">Order Tracking</h1>
+      </div>
+
+      <div className="p-4 space-y-5">
+        {/* Initial Success Message */}
+        {order.orderStatus === "pending" && ( // Show only initially
+          <div className="bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-center shadow animate-fade-in mb-5">
+            <FaClipboardCheck className="inline-block mr-2" size={20} />
+            <span className="font-semibold">Order Placed Successfully!</span>
+            <p className="text-sm">Order ID: ...{order._id.slice(-6)}</p>
+          </div>
+        )}
+
+        {/* Order Status Visualizer */}
+        <div className="bg-white rounded-lg shadow p-4 space-y-2">
+          <h2 className="font-heading text-lg text-brand-gray mb-3 border-b pb-2">
+            Order Status
+          </h2>
+          {displaySteps.map((stepStatus, index) => (
+            <OrderStatusStep
+              key={index}
+              stepStatus={stepStatus}
+              currentStep={currentStatusDetails.step}
+            />
+          ))}
+        </div>
+
+        {/* Order Summary (Optional but helpful) */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="font-heading text-lg text-brand-gray mb-3 border-b pb-2">
+            Order Summary
+          </h2>
+          <p className="text-sm text-brand-gray mb-1">
+            <span className="font-semibold">Restaurant:</span>{" "}
+            {order.foodPartner?.name || "N/A"}
+          </p>
+          <ul className="list-disc list-inside space-y-1 text-sm text-brand-gray mb-2 pl-4">
+            {order.items.map((item, index) => (
+              <li key={index}>
+                {item.quantity} x {item.food?.name || "Unknown Item"}
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm font-semibold text-brand-gray border-t pt-2 mt-2">
+            Total: ₹{order.totalAmount.toFixed(2)} (
+            {order.paymentDetails.method})
+          </p>
+        </div>
+
+        {/* Delivery Address */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="font-heading text-lg text-brand-gray mb-2">
+            Delivery Address
+          </h2>
+          <p className="text-sm text-gray-700">
+            {order.deliveryAddress?.address?.formatted ||
+              "Address not available"}
+          </p>
+        </div>
+
+        {/* Back to Home Button */}
+        <div className="text-center mt-6">
+          <Link to="/" className="text-brand-orange hover:underline text-sm">
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default OrderSuccessPage;

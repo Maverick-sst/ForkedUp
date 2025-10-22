@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { FaHome, FaUser } from "react-icons/fa";
 import axios from "axios";
-
+import CartButton from "../../components/CartButton";
 function Profile() {
   const [activeBtn, setActiveBtn] = useState("liked"); // default tab
   const [likedReels, setlikedReels] = useState([]);
@@ -33,7 +33,7 @@ function Profile() {
           });
         break;
       case "savedreels":
-        console.log("savedreels selected")
+        console.log("savedreels selected");
         axios
           .get(
             "http://localhost:8000/api/food/user/savedreels?page=1&limit=15",
@@ -176,6 +176,8 @@ function Profile() {
         )}
         {activeBtn === "orders" && <div>no orders yet!</div>}
       </div>
+
+      <CartButton />
 
       {/* Bottom navigation */}
       <div className="fixed bottom-0 w-full px-8 py-2 flex justify-between items-center bg-black/30 backdrop-blur-md z-10">

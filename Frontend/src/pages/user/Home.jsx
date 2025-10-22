@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import { Link } from "react-router-dom";
 import { FaHome, FaUser } from "react-icons/fa";
+import CartButton from "../../components/CartButton";
 import axios from "axios";
 function Home() {
   const { location, status, requestLocation } = useGeoLocation();
@@ -85,6 +86,9 @@ function Home() {
             </button>
           </Link>
         </div>
+       
+        <CartButton />
+        
 
         {/* Bottom nav */}
         <div className="fixed bottom-0 w-full px-8 py-2 flex justify-between items-center bg-white/80 backdrop-blur-md border-t border-gray-200 z-20">

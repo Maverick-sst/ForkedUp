@@ -31,7 +31,13 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    defaultAddress: { type: Number, default: 0 }, // index in addresses array
+    defaultAddress: { type: Number, default: 0 }, // index in addresses array,
+    orders: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Order", // Reference to the Order model
+      },
+    ],
   },
   {
     timestamps: true,

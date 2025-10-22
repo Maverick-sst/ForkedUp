@@ -1,16 +1,19 @@
 // foodPartner_Profile.jsx
 import { React, useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import CartButton from "../../components/CartButton";
 
 const FoodPartnerProfile = () => {
   const { id } = useParams();
   const videoRefs = useRef(new Map());
   const [videos, SetVideos] = useState([]);
   const [profile, SetProfile] = useState({});
-
+  const navigate = useNavigate();
   // const [successMsg, SetSuccessMsg] = useState("");
   // const [errMsg, SetErrMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     axios
       .get(`http://localhost:8000/api/food-partner/${id}`, {
@@ -18,27 +21,41 @@ const FoodPartnerProfile = () => {
       })
       .then((response) => {
         SetProfile(response.data.foodPartner);
-        console.log(response.data.foodPartner.name)
+        console.log(response.data.foodPartner.name);
 
         SetVideos(response.data.foodReels);
-        
-        
       })
       .catch((err) => {
         console.log(err);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, [id]);
+
+  const handleVideoClick = (videoId) => {
+    navigate(`/food-partner/${id}/${videoId}`);
+  };
+
+  if (loading) {
+    return <h1>loading...</h1>;
+  }
+
   return (
     <div className="bg-white min-h-screen p-4 font-sans">
       <div className="flex items-center justify-between mb-6">
         {/* Profile Pic and Restro Name */}
         <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-full bg-gray-300"></div>
+          <div className="w-12 h-12 rounded-full bg-gray-300">
+            <img src={profile.profilePhoto}></img>
+          </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-800">
               {profile.name}
             </h1>
-            <p className="text-sm text-gray-500">Location</p>
+            <p className="text-sm text-gray-500">
+              {profile.location.address.formatted}
+            </p>
           </div>
         </div>
 
@@ -46,7 +63,9 @@ const FoodPartnerProfile = () => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-1">
             <span className="text-yellow-400">★</span>
-            <span className="text-gray-700 font-medium">4.2</span>
+            <span className="text-gray-700 font-medium">
+              {profile.ratingAverage}
+            </span>
           </div>
           <div className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm">
             100+ customers served
@@ -69,26 +88,38 @@ const FoodPartnerProfile = () => {
 
       {/* Food Reels Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-        {videos.map((item)=>(
-           <div key={item._id.toString()} className="aspect-w-9 aspect-h-16">
+        {videos.map((item) => (
+          <div key={item._id.toString()} className="aspect-w-9 aspect-h-16">
             <div className="w-full h-full bg-gray-200 rounded-lg">
               <video
-            ref={(el) => {
-              if (el) videoRefs.current.set(item._id, el);
-              else videoRefs.current.delete(item._id);
-            }}
-            src={item.video} // backend field is `video`
-            muted
-            playsInline
-            loop
-            preload="metadata"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
+                ref={(el) => {
+                  if (el) videoRefs.current.set(item._id, el);
+                  else videoRefs.current.delete(item._id);
+                }}
+                src={item.video} // backend field is `video`
+                muted
+                playsInline
+                loop
+                preload="metadata"
+                onClick={() => handleVideoClick(item._id)}
+                onMouseEnter={() => {
+                  const currentVideo = videoRefs.current.get(item._id);
+                  if (currentVideo) currentVideo.play();
+                }}
+                onMouseLeave={() => {
+                  const currentVideo = videoRefs.current.get(item._id);
+                  if (currentVideo) {
+                    currentVideo.pause();
+                    currentVideo.currentTime = 0;
+                  }
+                }}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
             </div>
           </div>
         ))}
       </div>
-
+      <CartButton />
       {/* Glassmorphism Menu Button */}
       <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2">
         <button

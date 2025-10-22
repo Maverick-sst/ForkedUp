@@ -5,6 +5,8 @@ const foodRoutes = require("../src/routes/food.routes");
 const uploadRoutes = require("../src/routes/upload.routes");
 const detailsRoutes = require("../src/routes/details.routes");
 const foodPartnerRoutes = require("../src/routes/food-partner.routes");
+const userRoutes = require("../src/routes/user.routes");
+const orderRoutes = require("../src/routes/orders.routes");
 const featureRoutes = require("./routes/features.routes");
 const locationRoutes = require("../src/routes/location.routes");
 const cors = require("cors");
@@ -24,6 +26,8 @@ app.use("/api/me", detailsRoutes);
 app.use("/api/upload/", uploadRoutes);
 app.use("/api/food/", foodRoutes);
 app.use("/api/food-partner/", foodPartnerRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/orders",orderRoutes);
 app.use("/api/feature/", featureRoutes);
 app.use("/api/location/", locationRoutes); //--- this will be used by both user and food-partner to quickly display form add on fronen
 module.exports = app;

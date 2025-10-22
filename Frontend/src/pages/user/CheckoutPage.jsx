@@ -1,0 +1,472 @@
+// Frontend/src/pages/user/CheckoutPage.jsx
+import React, { useState, useEffect } from "react";
+import { useCart } from "../../context/CartContext";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { IoArrowBack } from "react-icons/io5";
+import {
+  FaMapMarkerAlt,
+  FaRegAddressCard,
+  FaCreditCard,
+  FaSave,
+} from "react-icons/fa";
+
+function CheckoutPage() {
+  const { cartItems, totalAmount, clearCart } = useCart();
+  const navigate = useNavigate();
+
+  // --- State Management ---
+  // (States remain the same as previous version)
+  const [userAddresses, setUserAddresses] = useState([]);
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
+  const [isUsingManualAddress, setIsUsingManualAddress] = useState(true);
+  const [manualFormattedAddress, setManualFormattedAddress] = useState("");
+  const [manualStreet, setManualStreet] = useState("");
+  const [manualBlock, setManualBlock] = useState("");
+  const [manualBuilding, setManualBuilding] = useState("");
+  const [manualFloor, setManualFloor] = useState("");
+  const [manualLandmark, setManualLandmark] = useState("");
+  const [newAddressLabel, setNewAddressLabel] = useState("other");
+  const [saveNewAddress, setSaveNewAddress] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // --- Effects ---
+  // (useEffect logic remains the same - fetch user data, handle empty cart)
+  useEffect(() => {
+    // ... (fetch user details and local storage logic as before) ...
+    const fetchUserDetailsAndLocalStorage = async () => {
+      setIsLoading(true);
+      setErrorMessage("");
+      let fetchedAddresses = [];
+      let defaultAddressIndex = 0;
+      let useManual = true;
+
+      try {
+        const response = await axios.get("http://localhost:8000/api/me", {
+          withCredentials: true,
+        });
+        if (response.data?.user?.addresses?.length > 0) {
+          fetchedAddresses = response.data.user.addresses;
+          defaultAddressIndex = response.data.user.defaultAddress || 0;
+          if (
+            defaultAddressIndex >= fetchedAddresses.length ||
+            defaultAddressIndex < 0
+          ) {
+            defaultAddressIndex = 0;
+          }
+          setUserAddresses(fetchedAddresses);
+          setSelectedAddressIndex(defaultAddressIndex);
+          useManual = false;
+        } else {
+          setUserAddresses([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user details:", error);
+      }
+
+      setIsUsingManualAddress(useManual);
+
+      if (useManual) {
+        const storedAddress = localStorage.getItem("userAddress");
+        if (storedAddress && !manualFormattedAddress) {
+          setManualFormattedAddress(storedAddress);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    if (cartItems.length === 0 && !isLoading) {
+      // Initial check
+      navigate("/cart", { replace: true });
+      return;
+    }
+
+    fetchUserDetailsAndLocalStorage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading && cartItems.length === 0) {
+      navigate("/cart", { replace: true });
+    }
+  }, [cartItems, isLoading, navigate]);
+
+  // --- Helper Functions ---
+  // (getFinalDeliveryLocationObject remains the same)
+  const getFinalDeliveryLocationObject = () => {
+    if (!isUsingManualAddress && userAddresses.length > selectedAddressIndex) {
+      return userAddresses[selectedAddressIndex].location;
+    } else if (isUsingManualAddress) {
+      const formatted =
+        manualFormattedAddress.trim() ||
+        `${manualBuilding}, ${manualFloor}, ${manualStreet}, ${manualBlock}${
+          manualLandmark ? ", near " + manualLandmark : ""
+        }`
+          .replace(/, ,/g, ",")
+          .replace(/^, |, $/g, "")
+          .replace(/ ,/g, ",")
+          .trim();
+
+      if (
+        !formatted &&
+        !manualStreet.trim() &&
+        !manualBlock.trim() &&
+        !manualBuilding.trim()
+      ) {
+        return null;
+      }
+
+      return {
+        type: "Point",
+        address: {
+          formatted: formatted || undefined,
+          street: manualStreet.trim() || undefined,
+          block: manualBlock.trim() || undefined,
+          building: manualBuilding.trim() || undefined,
+          floor: manualFloor.trim() || undefined,
+          landmark: manualLandmark.trim() || undefined,
+        },
+      };
+    }
+    return null;
+  };
+
+  // --- Event Handlers ---
+  const handlePlaceOrder = async () => {
+    setIsPlacingOrder(true);
+    setErrorMessage("");
+    const finalLocationObject = getFinalDeliveryLocationObject();
+
+    if (cartItems.length === 0) {
+      /* ... set error, return ... */
+    }
+    if (!finalLocationObject) {
+      /* ... set error, return ... */
+    }
+
+    // --- Step 1: Save New Address (API Call Implemented) ---
+    let addressToUseForOrder = finalLocationObject; // Use manual object by default
+    if (isUsingManualAddress && saveNewAddress) {
+      try {
+        console.log("Attempting to save new address:", {
+          label: newAddressLabel,
+          location: finalLocationObject,
+        });
+        // *** API CALL TO SAVE ADDRESS ***
+        const saveResponse = await axios.patch(
+          "http://localhost:8000/api/user/addresses", // Your actual endpoint
+          { label: newAddressLabel, location: finalLocationObject },
+          { withCredentials: true }
+        );
+        console.log("Address save successful:", saveResponse.data);
+        // Optional: Update addressToUseForOrder if the backend returns the saved object with _id etc.
+        // addressToUseForOrder = saveResponse.data.address.location;
+      } catch (error) {
+        console.error("Failed to save new address:", error);
+        setErrorMessage(
+          `Could not save the new address: ${
+            error.response?.data?.message || error.message
+          }. Order not placed.`
+        );
+        setIsPlacingOrder(false);
+        return; // Stop order placement if saving failed
+      }
+    }
+
+    // --- Step 2: Prepare Order Payload ---
+    const orderPayload = {
+      items: cartItems.map((item) => ({
+        food: item.foodId,
+        quantity: item.quantity,
+        // **IMPORTANT**: Send price for reference, but backend MUST recalculate
+        price: item.price, // Send the price the user saw
+      })),
+      totalAmount: totalAmount, // Send the total the user saw
+      deliveryAddress: addressToUseForOrder, // Use the final address object
+      paymentDetails: {
+        method: paymentMethod,
+        status: "pending",
+      },
+      foodPartner: cartItems.length > 0 ? cartItems[0].foodPartnerId : null,
+    };
+
+    if (!orderPayload.foodPartner) {
+      /* ... set error, return ... */
+    }
+
+    // --- Step 3: Place Order (API Call Implemented) ---
+    try {
+      console.log("Placing order with payload:", orderPayload);
+      // *** API CALL TO CREATE ORDER ***
+      const orderResponse = await axios.post(
+        "http://localhost:8000/api/orders", // Your actual order creation endpoint
+        orderPayload,
+        { withCredentials: true }
+      );
+
+      console.log("Order placed successfully:", orderResponse.data);
+      alert("Order Placed Successfully!");
+      clearCart();
+      const newOrderId = orderResponse.data.order?._id;
+      if (newOrderId) {
+        navigate(`/order-success/${newOrderId}`); // Navigate with the ID
+      } else {
+        console.error("Order created but ID missing in response");
+        navigate("/"); // Fallback navigation
+      }
+    } catch (error) {
+      console.error("Order placement failed:", error);
+      // Display specific backend validation errors if available
+      setErrorMessage(
+        error.response?.data?.message ||
+          "Failed to place order. Please try again."
+      );
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
+
+  // --- Render Logic ---
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-brand-offwhite">
+        Loading Checkout...
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-brand-offwhite font-body pb-24">
+      {/* Header */}
+      <div className="bg-white shadow-sm sticky top-0 z-20 p-4 flex items-center">
+        <button
+          onClick={() => navigate("/cart")}
+          className="text-brand-gray mr-4"
+        >
+          <IoArrowBack size={24} />
+        </button>
+        <h1 className="font-heading text-xl text-brand-gray">Checkout</h1>
+      </div>
+
+      <div className="p-4 space-y-4">
+        {/* Map Placeholder */}
+        <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
+          <h2 className="font-heading text-lg text-brand-gray mb-3 self-start flex items-center gap-2">
+            <FaMapMarkerAlt /> Delivery Location
+          </h2>
+          <div className="w-32 h-32 md:w-40 md:h-40 bg-green-100 border-2 border-dashed border-green-400 rounded-full flex items-center justify-center text-center text-green-700 text-xs md:text-sm p-4">
+            Map Placeholder
+            {/* TODO: Add Map Integration */}
+          </div>
+        </div>
+
+        {/* Address Section */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="font-heading text-lg text-brand-gray mb-3 flex items-center gap-2">
+            <FaRegAddressCard /> Delivery Address
+          </h2>
+          {errorMessage && (
+            <p className="text-sm text-red-600 mb-3">{errorMessage}</p>
+          )}
+
+          {/* Radio buttons to choose address type */}
+          <div className="flex gap-4 mb-4">
+            {userAddresses.length > 0 && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="addressType"
+                  checked={!isUsingManualAddress}
+                  onChange={() => setIsUsingManualAddress(false)}
+                  className="text-brand-orange focus:ring-brand-orange focus:ring-1"
+                />
+                <span className="text-sm text-brand-gray">Use Saved</span>
+              </label>
+            )}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="addressType"
+                checked={isUsingManualAddress}
+                onChange={() => setIsUsingManualAddress(true)}
+                className="text-brand-orange focus:ring-brand-orange focus:ring-1"
+              />
+              <span className="text-sm text-brand-gray">Enter New</span>
+            </label>
+          </div>
+
+          {/* Saved Address Selector */}
+          {!isUsingManualAddress && userAddresses.length > 0 && (
+            <select
+              value={selectedAddressIndex}
+              onChange={(e) =>
+                setSelectedAddressIndex(parseInt(e.target.value, 10))
+              }
+              className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2 mb-2"
+            >
+              {userAddresses.map((addr, index) => (
+                <option key={addr._id || index} value={index}>
+                  {addr.label.toUpperCase()} -{" "}
+                  {addr.location?.address?.formatted || "Address Incomplete"}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Manual Address Input Fields */}
+          {isUsingManualAddress && (
+            <div className="space-y-2 border-t pt-3 mt-3">
+              <h3 className="text-md font-semibold text-brand-gray mb-1">
+                Enter New Address Details:
+              </h3>
+              <input
+                type="text"
+                placeholder="Street Address"
+                value={manualStreet}
+                onChange={(e) => setManualStreet(e.target.value)}
+                className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Block / Sector"
+                  value={manualBlock}
+                  onChange={(e) => setManualBlock(e.target.value)}
+                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+                />
+                <input
+                  type="text"
+                  placeholder="Building Name"
+                  value={manualBuilding}
+                  onChange={(e) => setManualBuilding(e.target.value)}
+                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Floor / Apt No."
+                  value={manualFloor}
+                  onChange={(e) => setManualFloor(e.target.value)}
+                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+                />
+                <input
+                  type="text"
+                  placeholder="Landmark (Optional)"
+                  value={manualLandmark}
+                  onChange={(e) => setManualLandmark(e.target.value)}
+                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+                />
+              </div>
+              <textarea
+                placeholder="Formatted Address (Optional, if different from auto)"
+                value={manualFormattedAddress}
+                onChange={(e) => setManualFormattedAddress(e.target.value)}
+                rows="2"
+                className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+              />
+
+              {/* Address Label & Save Checkbox */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-brand-gray">
+                    Label as:
+                  </span>
+                  {["home", "work", "other"].map((label) => (
+                    <label
+                      key={label}
+                      className="flex items-center gap-1 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="addressLabel"
+                        value={label}
+                        checked={newAddressLabel === label}
+                        onChange={() => setNewAddressLabel(label)}
+                        className="text-brand-orange focus:ring-brand-orange focus:ring-1"
+                      />
+                      <span className="text-sm capitalize">{label}</span>
+                    </label>
+                  ))}
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer mt-2 sm:mt-0">
+                  <input
+                    type="checkbox"
+                    checked={saveNewAddress}
+                    onChange={(e) => setSaveNewAddress(e.target.checked)}
+                    className="rounded text-brand-orange focus:ring-brand-orange focus:ring-1"
+                  />
+                  <span className="text-sm text-brand-gray">Save address</span>
+                  <FaSave className="text-brand-gray" />
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Payment Method Section */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="font-heading text-lg text-brand-gray mb-3 flex items-center gap-2">
+            <FaCreditCard /> Payment Method
+          </h2>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="Cash on Delivery"
+                checked={paymentMethod === "Cash on Delivery"}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="text-brand-orange focus:ring-brand-orange focus:ring-1"
+              />
+              <span className="text-sm text-brand-gray">Cash on Delivery</span>
+            </label>
+            <label className="flex items-center gap-2 p-2 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="UPI"
+                checked={paymentMethod === "UPI"}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="text-brand-orange focus:ring-brand-orange focus:ring-1"
+              />
+              <span className="text-sm text-brand-gray">UPI</span>
+            </label>
+            <label className="flex items-center gap-2 p-2 border rounded-lg text-gray-400 cursor-not-allowed">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="Card"
+                disabled
+                className="text-brand-orange focus:ring-brand-orange focus:ring-1"
+              />
+              <span className="text-sm">Card (Coming Soon)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Fixed Footer with Place Order Button */}
+      <div className="fixed bottom-0 left-0 w-full bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] border-t p-3 z-10">
+        <button
+          onClick={handlePlaceOrder}
+          disabled={isPlacingOrder || isLoading}
+          className={`w-full max-w-md mx-auto block py-3 px-6 text-white font-heading rounded-lg shadow transition-opacity ${
+            isPlacingOrder || isLoading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-brand-green hover:opacity-90"
+          }`}
+        >
+          {isPlacingOrder
+            ? "Processing..."
+            : `Place Order (₹${totalAmount.toFixed(2)})`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default CheckoutPage;

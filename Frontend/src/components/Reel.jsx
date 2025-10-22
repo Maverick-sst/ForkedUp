@@ -11,13 +11,15 @@ import {
 } from "react-icons/fa";
 
 import { ArrowLeft, Play, Pause } from "lucide-react";
+import { useCart } from "../context/CartContext";
 
-function Reel({listOfVideos}) {
+function Reel({ listOfVideos }) {
   const [videos, setVideos] = useState(listOfVideos);
   const videoRefs = useRef(new Map());
   const [isVideoPaused, setisVideoPaused] = useState(false);
   const [isActiveVideoId, setIsActiveVideoId] = useState(null);
   const [isIconDisplayed, setIsIconDisplayed] = useState(false);
+  const {addItemToCart}= useCart();
   // Observe videos after they are rendered
   useEffect(() => {
     if (videos.length === 0) return;
@@ -70,6 +72,7 @@ function Reel({listOfVideos}) {
       }, 500);
     }
   }
+
   async function handleLike(videoId, currentLikeStatus) {
     if (!isActiveVideoId) return;
     setVideos((currentVideos) =>
@@ -102,15 +105,16 @@ function Reel({listOfVideos}) {
     } catch (error) {
       console.log(error);
       // Revert UI state if API call fails
-      setVideos((currentVideos) => {
-        currentVideos.map((video) => {
+      setVideos((currentVideos) =>
+        currentVideos.map((video) =>
           video._id === videoId
-            ? { ...video, likedByuser: video.likedByUser }
-            : video;
-        });
-      });
+            ? { ...video, likedByUser: !video.likedByUser }
+            : video
+        )
+      );
     }
   }
+
   async function handleSave(videoId, currentSaveStatus) {
     if (!isActiveVideoId) return;
     setVideos((currentVideos) =>
@@ -143,15 +147,21 @@ function Reel({listOfVideos}) {
     } catch (error) {
       console.log(error);
       // Revert UI state if API call fails
-      setVideos((currentVideos) => {
-        currentVideos.map((video) => {
+      setVideos((currentVideos) =>
+        currentVideos.map((video) =>
           video._id === videoId
-            ? { ...video, savedByUser: video.savedByUser }
-            : video;
-        });
-      });
+            ? { ...video, savedByUser: !video.savedByUser }
+            : video
+        )
+      );
     }
   }
+  const handleBuyClick=(e,item)=>{
+    e.stopPropagation();
+    addItemToCart(item);
+    alert(`${item.name} added to Cart`)
+  }
+
   return (
     <div onClick={handleClick} className="relative h-screen overflow-hidden">
       {/* Backspace icon - sticky positioned */}
@@ -206,6 +216,14 @@ function Reel({listOfVideos}) {
               onPlay={() => {
                 setisVideoPaused(false);
               }}
+              onClick={() => {
+                setIsActiveVideoId(item._id);
+                setisVideoPaused(false);
+                setIsIconDisplayed(true);
+                setTimeout(() => {
+                  setIsIconDisplayed(false);
+                }, 500);
+              }}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
 
@@ -252,14 +270,16 @@ function Reel({listOfVideos}) {
                 <div className="px-4 py-2 rounded-xl bg-white/40 backdrop-blur-md border border-white/30 text-white font-body text-sm">
                   {item.description || "food-descrip"}
                 </div>
+                <p className="text-sm font-semibold flex justify-between items-center"><span>{item.name}</span> <span className="text-brand-orange font-bold">₹{item.price?.toFixed(2)}</span></p>
               </div>
 
               <div className="flex gap-3">
-                <button className="flex-1 py-2 rounded-xl bg-brand-green text-white font-heading shadow hover:opacity-90">
-                  Buy
+                <button onClick={(e) => handleBuyClick(e, item)} className="flex-1 py-2 rounded-xl bg-brand-green text-white font-heading shadow hover:opacity-90">
+                  Add To Cart
                 </button>
                 <Link
                   to={"/food-partner/" + item.foodPartner}
+                  onClick={(e)=>e.stopPropagation()}
                   className="flex-1"
                 >
                   <button className="w-full py-2 rounded-xl bg-brand-orange text-white font-heading shadow hover:bg-brand-peach">
