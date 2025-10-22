@@ -2,7 +2,7 @@ const foodModel = require("../models/food.model");
 const Like = require("../models/Features/likes.model");
 const saveSchemaModel = require("../models/Features/save.model");
 const commentModel = require("../models/Features/comments.model");
-
+const mongoose = require("mongoose");
 async function like(req, res) {
   const userId = req.user && req.user._id;
   const { videoId } = req.body;
@@ -142,10 +142,56 @@ async function comment(req, res) {
     data: commentMade,
   });
 }
+
+async function getComments(req, res) {
+    const foodId = req.params.foodId;
+    // Default to page 1, limit 15 comments per page
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 15;
+    const skip = (page - 1) * limit;
+
+    if (!foodId || !mongoose.Types.ObjectId.isValid(foodId)) {
+        return res.status(400).json({ message: "Invalid or missing Food ID." });
+    }
+
+    try {
+        const commentsQuery = commentModel.find({ food: foodId })
+            .sort({ createdAt: -1 }) // Show newest comments first
+            .skip(skip)
+            .limit(limit)
+            .populate('user', 'userName name profilePhoto'); // Populate user details (adjust fields as needed)
+
+        const totalCommentsQuery = commentModel.countDocuments({ food: foodId });
+
+        // Execute queries concurrently
+        const [comments, totalComments] = await Promise.all([
+             commentsQuery.exec(),
+             totalCommentsQuery.exec()
+        ]);
+
+
+        // Determine if there are more comments to load
+        const hasMore = (skip + comments.length) < totalComments;
+
+        return res.status(200).json({
+            message: "Comments fetched successfully",
+            comments: comments,
+            currentPage: page,
+            totalPages: Math.ceil(totalComments / limit),
+            totalComments: totalComments,
+            hasMore: hasMore
+        });
+
+    } catch (error) {
+        console.error("Error fetching comments:", error);
+        return res.status(500).json({ message: "Failed to fetch comments due to server error." });
+    }
+}
 module.exports = {
   like,
   addToWatchlist,
   dislike,
   removeFromWatchlist,
   comment,
+  getComments
 };

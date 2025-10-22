@@ -12,14 +12,15 @@ import {
 
 import { ArrowLeft, Play, Pause } from "lucide-react";
 import { useCart } from "../context/CartContext";
-
+import CommentPanel from "./CommentPanel";
 function Reel({ listOfVideos }) {
   const [videos, setVideos] = useState(listOfVideos);
   const videoRefs = useRef(new Map());
   const [isVideoPaused, setisVideoPaused] = useState(false);
   const [isActiveVideoId, setIsActiveVideoId] = useState(null);
   const [isIconDisplayed, setIsIconDisplayed] = useState(false);
-  const {addItemToCart}= useCart();
+  const [openCommentPanelId, setOpenCommentPanelId] = useState(null); // State for managing which comment panel is open
+  const { addItemToCart } = useCart();
   // Observe videos after they are rendered
   useEffect(() => {
     if (videos.length === 0) return;
@@ -156,12 +157,15 @@ function Reel({ listOfVideos }) {
       );
     }
   }
-  const handleBuyClick=(e,item)=>{
+  const handleBuyClick = (e, item) => {
     e.stopPropagation();
     addItemToCart(item);
-    alert(`${item.name} added to Cart`)
-  }
-
+    alert(`${item.name} added to Cart`);
+  };
+  // Function to close the comment panel
+  const closeCommentPanel = () => {
+    setOpenCommentPanelId(null);
+  };
   return (
     <div onClick={handleClick} className="relative h-screen overflow-hidden">
       {/* Backspace icon - sticky positioned */}
@@ -245,8 +249,25 @@ function Reel({ listOfVideos }) {
               <button className="p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition">
                 <FaShareAlt size={20} />
               </button>
-              <button className="p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/30 transition">
-                <FaCommentDots size={20} />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent main div's handleClick
+                  // Pause the video if playing
+                  const videoElement = videoRefs.current.get(item._id);
+                  if (videoElement && !videoElement.paused) {
+                    videoElement.pause();
+                  }
+                  setOpenCommentPanelId(item._id); // Open panel for this video
+                }}
+                className="flex flex-col items-center gap-1 text-center z-20" // Ensure button is clickable
+                aria-label="View comments"
+              >
+                <div className="p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-white/30 transition">
+                  <FaCommentDots size={20} />
+                </div>
+                <span className="text-xs font-semibold">
+                  {item.commentCount || 0}
+                </span>
               </button>
               <button
                 onClick={(e) => {
@@ -270,16 +291,24 @@ function Reel({ listOfVideos }) {
                 <div className="px-4 py-2 rounded-xl bg-white/40 backdrop-blur-md border border-white/30 text-white font-body text-sm">
                   {item.description || "food-descrip"}
                 </div>
-                <p className="text-sm font-semibold flex justify-between items-center"><span>{item.name}</span> <span className="text-brand-orange font-bold">₹{item.price?.toFixed(2)}</span></p>
+                <p className="text-sm font-semibold flex justify-between items-center">
+                  <span>{item.name}</span>{" "}
+                  <span className="text-brand-orange font-bold">
+                    ₹{item.price?.toFixed(2)}
+                  </span>
+                </p>
               </div>
 
               <div className="flex gap-3">
-                <button onClick={(e) => handleBuyClick(e, item)} className="flex-1 py-2 rounded-xl bg-brand-green text-white font-heading shadow hover:opacity-90">
+                <button
+                  onClick={(e) => handleBuyClick(e, item)}
+                  className="flex-1 py-2 rounded-xl bg-brand-green text-white font-heading shadow hover:opacity-90"
+                >
                   Add To Cart
                 </button>
                 <Link
                   to={"/food-partner/" + item.foodPartner}
-                  onClick={(e)=>e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
                   className="flex-1"
                 >
                   <button className="w-full py-2 rounded-xl bg-brand-orange text-white font-heading shadow hover:bg-brand-peach">
@@ -301,6 +330,13 @@ function Reel({ listOfVideos }) {
           <FaUser size={24} className="text-white" />
         </Link>
       </div>
+
+      {openCommentPanelId && (
+        <CommentPanel
+          foodId={openCommentPanelId}
+          onClose={closeCommentPanel}
+        />
+      )}
     </div>
   );
 }
