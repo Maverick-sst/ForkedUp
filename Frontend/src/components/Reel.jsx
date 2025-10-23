@@ -1,15 +1,8 @@
 // Frontend/src/components/Reel.jsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import {
-  FaHome,
-  FaUser,
-  FaHeart,
-  FaShareAlt,
-  FaCommentDots,
-  FaBookmark,
-} from "react-icons/fa";
+import { FaHeart, FaShareAlt, FaCommentDots, FaBookmark } from "react-icons/fa";
 import { ArrowLeft, Play, Pause } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import CommentPanel from "./CommentPanel";
@@ -25,6 +18,7 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
   const [isIconDisplayed, setIsIconDisplayed] = useState(false);
   const [openCommentPanelId, setOpenCommentPanelId] = useState(null);
   const { addItemToCart } = useCart();
+  const [partnerInfoMap, setPartnerInfoMap] = useState({}); // { partnerId: { name, profilePhoto } }
 
   // This is what allows the optimistic updates from Feed.jsx to work
   useEffect(() => {
@@ -62,6 +56,70 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
       observer.disconnect();
     };
   }, [videos]); // Still depends on internal videos state
+
+  // *** NEW useEffect: Fetch partner details efficiently ***
+  useEffect(() => {
+    // Only proceed if there are videos
+    if (!videos || videos.length === 0) return;
+
+    // 1. Get unique partner IDs from the current videos list that are not yet fetched
+    const uniquePartnerIds = [
+      ...new Set(videos.map((v) => v.foodPartner).filter(Boolean)),
+    ];
+    // Also validate ID format and check if already fetched
+    const idsToFetch = uniquePartnerIds.filter(
+      (id) => id && !partnerInfoMap[id] && /^[0-9a-fA-F]{24}$/.test(id)
+    );
+
+    // 2. If no new partners to fetch, exit early
+    if (idsToFetch.length === 0) return;
+
+    // 3. Define the async function to fetch a single partner's data
+    const fetchPartner = async (id) => {
+      try {
+        console.log(`Fetching partner details for ID: ${id}`); // Log fetching attempt
+        // Use the correct endpoint structure: /api/food-partner/:id
+        const res = await axios.get(
+          `http://localhost:8000/api/food-partner/${id}`,
+          { withCredentials: true }
+        );
+        // Access nested partner data correctly based on controller response
+        const partnerData = res.data?.foodPartner;
+        if (partnerData) {
+          // Return an object with id, name, and profilePhoto
+          return {
+            id,
+            name: partnerData.name || "Partner",
+            profilePhoto: partnerData.profilePhoto,
+          };
+        }
+        console.warn(`Partner data missing in response for ID: ${id}`);
+        return { id, name: "Partner N/A", profilePhoto: null }; // Handle missing data
+      } catch (e) {
+        console.error("Failed to fetch partner", id, e);
+        // Return fallback data on error
+        return { id, name: "Partner Error", profilePhoto: null };
+      }
+    };
+
+    // 4. Fetch details for all missing partners concurrently
+    Promise.all(idsToFetch.map(fetchPartner))
+      .then((results) => {
+        // Create a map of the newly fetched data
+        const newPartnerData = results.reduce((acc, p) => {
+          if (p) acc[p.id] = { name: p.name, profilePhoto: p.profilePhoto };
+          return acc;
+        }, {});
+        // 5. Update the partnerInfoMap state, merging new data with existing
+        setPartnerInfoMap((prevMap) => ({ ...prevMap, ...newPartnerData }));
+        console.log("Updated partnerInfoMap:", newPartnerData); // Log updates
+      })
+      .catch((err) => {
+        console.error("Error processing partner fetch results:", err); // Catch errors in Promise.all
+      });
+
+    // 6. Dependency: Re-run this effect if the `videos` list changes or partnerInfoMap updates.
+  }, [videos, partnerInfoMap]);
 
   // handleClick remains the same
   function handleClick() {
@@ -188,7 +246,20 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
     addItemToCart(item);
     alert(`${item.name} added to Cart`);
   };
-
+  const handleCommentClick = (e, videoId) => {
+    e.stopPropagation(); // Prevent triggering the main div's handleClick (play/pause)
+    const videoElement = videoRefs.current.get(videoId);
+    // If the video exists and is currently playing, pause it before opening comments
+    if (videoElement && !videoElement.paused) {
+      videoElement.pause();
+      // Manually update the pause state if this is the active video
+      if (videoId === isActiveVideoId) {
+        setisVideoPaused(true); // Explicitly set state as observer might not catch this immediately
+      }
+    }
+    // Set the state to open the CommentPanel for the specific videoId
+    setOpenCommentPanelId(videoId);
+  };
   const closeCommentPanel = () => {
     setOpenCommentPanelId(null);
   };
@@ -213,175 +284,227 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
           scrollSnapType: "y mandatory",
         }}
       >
-        {videos.map((item, index) => (
-          <section
-            ref={index === videos.length - 1 ? lastVideoRef : null}
-            key={item._id}
-            style={{
-              height: "100vh",
-              width: "100%",
-              position: "relative",
-              scrollSnapAlign: "start",
-            }}
-          >
-            {/* {Pause & Play} */}
-            {isIconDisplayed &&
-              isActiveVideoId === item._id && ( // Only show on active video
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-500 ease-in-out z-10">
-                  {isVideoPaused ? (
-                    <Play size={49} fill="white" className="text-white/80" />
-                  ) : (
-                    <Pause size={49} fill="white" className="text-white/80" />
-                  )}
+        {videos.map((item, index) => {
+          const partnerInfo = partnerInfoMap[item.foodPartner] || {
+            name: "Loading...",
+            profilePhoto: null,
+          };
+          const likeCount =
+            typeof item.likeCount === "number" ? item.likeCount : 0;
+          const commentCount =
+            typeof item.commentCount === "number" ? item.commentCount : 0;
+
+          return (
+            <section
+              ref={index === videos.length - 1 ? lastVideoRef : null}
+              key={item._id} // Use item._id or index as fallback: key={item._id || index}
+              style={{
+                height: "100dvh", // Consider using "100dvh" for dynamic viewport height
+                width: "100%",
+                position: "relative",
+                scrollSnapAlign: "start",
+                backgroundColor: "black", // Added fallback background
+              }}
+              className="flex items-center justify-center" // Added flex centering
+              aria-label={`Reel for ${item.name || "food item"}`} // Accessibility
+            >
+              {/* {Pause & Play} */}
+              {isIconDisplayed && isActiveVideoId === item._id && (
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-500 ease-in-out z-10 animate-fade-in-out">
+                  {/* Added animation class */}
+                  <div className="bg-black/50 p-4 rounded-full">
+                    {/* Added background */}
+                    {isVideoPaused ? (
+                      <Play size={49} fill="white" className="text-white/90" /> // Adjusted opacity
+                    ) : (
+                      <Pause size={49} fill="white" className="text-white/90" /> // Adjusted opacity
+                    )}
+                  </div>
                 </div>
               )}
 
-            {/* Reel video */}
-            <video
-              ref={(el) => {
-                if (el) videoRefs.current.set(item._id, el);
-                else videoRefs.current.delete(item._id);
-              }}
-              src={item.video}
-              muted
-              playsInline
-              loop
-              preload="metadata"
-              data-id={item._id}
-              onPause={() => {
-                if (isActiveVideoId === item._id) setisVideoPaused(true);
-              }}
-              onPlay={() => {
-                if (isActiveVideoId === item._id) setisVideoPaused(false);
-              }}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-
-            {/* Gradient Overlay for Text Readability */}
-            <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
-
-            {/* Right-side action buttons */}
-            <div className="absolute right-4 bottom-70 flex flex-col gap-5 items-center text-white">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleLike(item._id, item.likedByUser); // Use the prop
+              {/* Reel video */}
+              <video
+                // Use the useCallback version of setVideoRef if implemented
+                ref={(el) => {
+                  if (el) videoRefs.current.set(item._id, el);
+                  else videoRefs.current.delete(item._id);
                 }}
-                className="flex flex-col items-center gap-1 text-center"
-              >
-                <div className="p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-white/30 transition">
-                  {/* The UI now depends on the prop, which is updated optimistically */}
-                  {item.likedByUser ? (
-                    <FaHeart size={25} color="#FF4040" />
-                  ) : (
-                    <FaHeart size={25} color="white" />
-                  )}
-                </div>
-                <span className="text-xs font-semibold">
-                  {item.likeCount || 0}
-                </span>
-              </button>
-
-              {/* Comment Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const videoElement = videoRefs.current.get(item._id);
-                  if (videoElement && !videoElement.paused) {
-                    videoElement.pause();
-                  }
-                  setOpenCommentPanelId(item._id);
+                src={item.video}
+                muted
+                playsInline
+                loop
+                preload="metadata"
+                data-id={item._id}
+                // Update pause/play state based on video events
+                onPause={() => {
+                  if (isActiveVideoId === item._id) setisVideoPaused(true);
                 }}
-                className="flex flex-col items-center gap-1 text-center z-20"
-                aria-label="View comments"
-              >
-                <div className="p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-white/30 transition">
-                  <FaCommentDots size={20} />
-                </div>
-                <span className="text-xs font-semibold">
-                  {item.commentCount || 0}
-                </span>
-              </button>
-
-              {/* Save Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSave(item._id, item.savedByUser); // Use the prop
+                onPlay={() => {
+                  if (isActiveVideoId === item._id) setisVideoPaused(false);
                 }}
-                className="flex flex-col items-center gap-1 text-center"
-              >
-                <div className="p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-white/30 transition">
-                  {/* UI depends on the prop */}
-                  {item.savedByUser ? (
-                    <FaBookmark size={25} color="#e78e3bff" />
-                  ) : (
-                    <FaBookmark size={25} color="white" />
-                  )}
-                </div>
-              </button>
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                className="block" // Ensure video takes up space
+              />
 
-              {/* Share Button (no change) */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  alert("Share clicked!");
-                }}
-                className="flex flex-col items-center gap-1 text-center"
-              >
-                <div className="p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-white/30 transition">
-                  <FaShareAlt size={25} />
-                </div>
-              </button>
-            </div>
+              {/* Gradient Overlay for Text Readability */}
+              <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
 
-            {/* Bottom info + buttons */}
-            <div className="absolute bottom-16 md:bottom-12 left-0 w-full px-4 flex flex-col gap-3 z-10">
-              <div className="flex flex-col gap-1 text-white">
-                <Link
-                  to={`/food-partner/${item.foodPartner}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-2 group"
-                >
-                  <div className="w-8 h-8 rounded-full bg-white/40 backdrop-blur-md border border-white/30 flex-shrink-0">
-                    {/* Partner profile image */}
-                  </div>
-                  <span className="font-semibold text-sm group-hover:underline">
-                    FoodPartnerName
-                  </span>
-                </Link>
-                <p className="text-xs line-clamp-2">
-                  {item.description || "Delicious food reel!"}
-                </p>
-                {/* Price Display */}
-                <p className="text-sm font-semibold flex justify-between items-center">
-                  <span>{item.name}</span>
-                  <span className="text-brand-orange font-bold">
-                    ₹{item.price?.toFixed(2)}
-                  </span>
-                </p>
-              </div>
-
-              <div className="flex gap-3">
+              {/* Right-side action buttons */}
+              <div className="absolute right-4 bottom-70 flex flex-col gap-5 items-center text-white">
                 <button
-                  onClick={(e) => handleBuyClick(e, item)}
-                  className="flex-1 py-2 rounded-xl bg-brand-green text-white font-heading shadow hover:opacity-90"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLike(item._id, item.likedByUser);
+                  }}
+                  className="flex flex-col items-center gap-1 text-center group" // Added group class
+                  aria-label={item.likedByUser ? "Unlike" : "Like"}
                 >
-                  Add To Cart
+                  <div className="p-3 bg-black/40 backdrop-blur-sm rounded-full group-hover:bg-white/20 transition duration-200">
+                    {/* Adjusted style */}
+                    <FaHeart
+                      size={24}
+                      color={item.likedByUser ? "#FF4040" : "white"}
+                      className={`transition-transform duration-200 ${
+                        item.likedByUser ? "scale-110" : "group-hover:scale-110"
+                      }`}
+                    />
+                    {/* Added hover effect */}
+                  </div>
+                  <span className="text-xs font-semibold drop-shadow-md">
+                    {likeCount}
+                  </span>
+                  {/* Use likeCount */}
                 </button>
-                <Link
-                  to={"/food-partner/" + item.foodPartner}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex-1"
+
+                {/* Comment Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCommentClick(e, item._id);
+                  }} // Use handleCommentClick
+                  className="flex flex-col items-center gap-1 text-center group z-20" // Added group class
+                  aria-label="View comments"
                 >
-                  <button className="w-full py-2 rounded-xl bg-brand-orange text-white font-heading shadow hover:bg-brand-peach">
-                    Explore
-                  </button>
-                </Link>
+                  <div className="p-3 bg-black/40 backdrop-blur-sm rounded-full group-hover:bg-white/20 transition duration-200">
+                    {/* Adjusted style */}
+                    <FaCommentDots
+                      size={22}
+                      className="group-hover:scale-110 transition-transform duration-200"
+                    />
+                    {/* Added hover effect */}
+                  </div>
+                  <span className="text-xs font-semibold drop-shadow-md">
+                    {commentCount}
+                  </span>
+                  {/* Use commentCount */}
+                </button>
+
+                {/* Save Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSave(item._id, item.savedByUser);
+                  }}
+                  className="flex flex-col items-center gap-1 text-center group" // Added group class
+                  aria-label={item.savedByUser ? "Unsave" : "Save"}
+                >
+                  <div className="p-3 bg-black/40 backdrop-blur-sm rounded-full group-hover:bg-white/20 transition duration-200">
+                    {/* Adjusted style */}
+                    <FaBookmark
+                      size={23}
+                      color={item.savedByUser ? "#FFB703" : "white"}
+                      className={`transition-transform duration-200 ${
+                        item.savedByUser ? "scale-110" : "group-hover:scale-110"
+                      }`}
+                    />
+                    {/* Adjusted color, added hover */}
+                  </div>
+                  {/* Save count usually not shown */}
+                </button>
+
+                {/* Share Button (no change) */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    alert("Share clicked!");
+                  }}
+                  className="flex flex-col items-center gap-1 text-center group" // Added group class
+                  aria-label="Share"
+                >
+                  <div className="p-3 bg-black/40 backdrop-blur-sm rounded-full group-hover:bg-white/20 transition duration-200">
+                    {/* Adjusted style */}
+                    <FaShareAlt
+                      size={22}
+                      className="group-hover:scale-110 transition-transform duration-200"
+                    />
+                    {/* Added hover effect */}
+                  </div>
+                </button>
               </div>
-            </div>
-          </section>
-        ))}
+
+              {/* Bottom info + buttons */}
+              {/* Adjusted bottom position and z-index */}
+              <div className="absolute bottom-16 md:bottom-12 left-0 w-full px-4 flex flex-col gap-3 z-20">
+                <div className="flex flex-col gap-1 text-white text-shadow">
+                  {/* Added text-shadow */}
+                  <Link
+                    to={`/food-partner/${item.foodPartner}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-2 group w-fit" // Added w-fit
+                  >
+                    {/* *** MODIFIED PROFILE IMAGE *** */}
+                    <img
+                      src={
+                        partnerInfo.profilePhoto ||
+                        `https://ui-avatars.com/api/?name=${(
+                          partnerInfo.name || "P"
+                        ).charAt(0)}&background=random&color=fff&size=32`
+                      } // Use state + Placeholder
+                      alt={partnerInfo.name} // Use fetched name for alt text
+                      className="w-8 h-8 rounded-full object-cover border border-white/30 flex-shrink-0 bg-gray-500" // Added bg-gray-500 fallback
+                    />
+                    {/* *** MODIFIED PARTNER NAME *** */}
+                    <span className="font-semibold text-sm group-hover:underline">
+                      {partnerInfo.name} {/* Display fetched name */}
+                    </span>
+                  </Link>
+                  <p className="text-xs line-clamp-2">
+                    {item.description || " "}
+                    {/* Default to space if no description */}
+                  </p>
+                  {/* Price Display */}
+                  <p className="text-sm font-semibold flex justify-between items-center mt-1">
+                    {/* Added mt-1 */}
+                    <span>{item.name}</span>
+                    <span className="text-brand-orange font-bold text-base">
+                      {/* Increased size */}₹{item.price?.toFixed(2)}
+                    </span>
+                  </p>
+                </div>
+
+                {/* Action Buttons - Adjusted styling */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={(e) => handleBuyClick(e, item)}
+                    className="flex-1 py-2.5 rounded-lg bg-brand-green text-white font-semibold text-sm shadow hover:opacity-90 active:scale-95 transition"
+                  >
+                    Add To Cart
+                  </button>
+                  <Link
+                    to={"/food-partner/" + item.foodPartner}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1"
+                  >
+                    <button className="w-full py-2.5 rounded-lg bg-brand-orange text-white font-semibold text-sm shadow hover:bg-brand-peach hover:text-black active:scale-95 transition">
+                      Explore Partner
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </section>
+          );
+        })}
       </div>
 
       {/* Sticky bottom navigation bar */}

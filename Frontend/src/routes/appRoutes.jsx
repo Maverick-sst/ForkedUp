@@ -15,6 +15,7 @@ import FoodPartnerReels from "../pages/user/FoodPartnerReels";
 import CartPage from "../pages/user/CartPage";
 import CheckoutPage from "../pages/user/CheckoutPage";
 import OrderSuccessPage from "../pages/user/OrderSuccessPage";
+import UserProfileReelsViewer from "../components/UserProfileReelsViewer";
 
 const AppRoutes = () => {
   return (
@@ -29,7 +30,11 @@ const AppRoutes = () => {
         <Route path="/food-partner/login" element={<FoodPartnerLogin />} />
         <Route path="/feed" element={<Feed />} />
         <Route path="/" element={<Home />} />
+
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/reels/liked" element={<UserProfileReelsViewer/>}/>
+        <Route path="/profile/reels/saved" element={<UserProfileReelsViewer/>}/>
+
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />

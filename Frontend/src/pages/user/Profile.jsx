@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { FaHome, FaUser } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import CartButton from "../../components/CartButton";
 import BottomNav from "../../components/BottomNav";
@@ -9,7 +9,7 @@ function Profile() {
   const [activeBtn, setActiveBtn] = useState("liked"); // default tab
   const [likedReels, setlikedReels] = useState([]);
   const [savedReels, setSavedReels] = useState([]);
-
+  const navigate = useNavigate();
   const videoRefs = useRef(new Map());
   // fetching reels upon mount
   useEffect(() => {
@@ -62,7 +62,16 @@ function Profile() {
   // const handleVideoClick = (foodId) => {
   //   navigate(`/food-partner/${id}/${foodId}`);
   // };
-
+  const handleVideoClick = (item, index, type) => {
+  const reelList = type === 'liked' ? likedReels : savedReels;
+  navigate(`/profile/reels/${type}`, {
+    state: {
+      reels: reelList,
+      startIndex: index, // Pass the index to start playback
+      // or startId: item._id
+    }
+  });
+};
   const handleMouseEnter = (videoId) => {
     const video = videoRefs.current.get(videoId);
     if (video) {
@@ -143,9 +152,10 @@ function Profile() {
         {activeBtn === "liked" && (
           // likedReels
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-            {likedReels.map((item) => (
+            {likedReels.map((item,index) => (
               <div
                 key={item._id.toString()}
+                onClick={() => handleVideoClick(item, index, 'liked')} // Add onClick
                 onMouseEnter={() => handleMouseEnter(item._id)}
                 onMouseLeave={() => handleMouseLeave(item._id)}
                 className="aspect-w-9 aspect-h-16"
@@ -175,9 +185,10 @@ function Profile() {
         {activeBtn === "savedreels" && (
           // savedReels
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-            {savedReels.map((item) => (
+            {savedReels.map((item,index) => (
               <div
                 key={item._id.toString()}
+                onClick={() => handleVideoClick(item, index, 'saved')} // Add onClick
                 onMouseEnter={() => handleMouseEnter(item._id)}
                 onMouseLeave={() => handleMouseLeave(item._id)}
                 className="aspect-w-9 aspect-h-16"

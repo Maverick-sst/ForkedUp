@@ -7,6 +7,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    profilePhoto: {
+      type: String,
+    },
     userName: {
       type: String,
       required: true,
@@ -18,6 +21,9 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
     password: {
+      type: String,
+    },
+    phoneNo: {
       type: String,
     },
     addresses: [
