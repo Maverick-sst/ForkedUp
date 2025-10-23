@@ -33,8 +33,25 @@ const FoodPartnerProfile = () => {
       });
   }, [id]);
 
-  const handleVideoClick = (videoId) => {
-    navigate(`/food-partner/${id}/${videoId}`);
+  const handleVideoClick = (foodId) => {
+    navigate(`/food-partner/${id}/${foodId}`);
+  };
+
+  const handleMouseEnter = (videoId) => {
+    const video = videoRefs.current.get(videoId);
+    if (video) {
+      video.play().catch((err) => {
+        console.log("Autoplay prevented:", err);
+      });
+    }
+  };
+
+  const handleMouseLeave = (videoId) => {
+    const video = videoRefs.current.get(videoId);
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+    }
   };
 
   if (loading) {
@@ -89,7 +106,13 @@ const FoodPartnerProfile = () => {
       {/* Food Reels Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
         {videos.map((item) => (
-          <div key={item._id.toString()} className="aspect-w-9 aspect-h-16">
+          <div
+            key={item._id.toString()}
+            onMouseEnter={() => handleMouseEnter(item._id)}
+            onMouseLeave={() => handleMouseLeave(item._id)}
+            
+            className="aspect-w-9 aspect-h-16"
+          >
             <div className="w-full h-full bg-gray-200 rounded-lg">
               <video
                 ref={(el) => {
@@ -102,17 +125,6 @@ const FoodPartnerProfile = () => {
                 loop
                 preload="metadata"
                 onClick={() => handleVideoClick(item._id)}
-                onMouseEnter={() => {
-                  const currentVideo = videoRefs.current.get(item._id);
-                  if (currentVideo) currentVideo.play();
-                }}
-                onMouseLeave={() => {
-                  const currentVideo = videoRefs.current.get(item._id);
-                  if (currentVideo) {
-                    currentVideo.pause();
-                    currentVideo.currentTime = 0;
-                  }
-                }}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             </div>

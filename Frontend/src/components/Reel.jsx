@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import {
@@ -16,6 +17,7 @@ import CommentPanel from "./CommentPanel";
 function Reel({ listOfVideos }) {
   const [videos, setVideos] = useState(listOfVideos);
   const videoRefs = useRef(new Map());
+  const navigate = useNavigate();
   const [isVideoPaused, setisVideoPaused] = useState(false);
   const [isActiveVideoId, setIsActiveVideoId] = useState(null);
   const [isIconDisplayed, setIsIconDisplayed] = useState(false);
@@ -169,11 +171,13 @@ function Reel({ listOfVideos }) {
   return (
     <div onClick={handleClick} className="relative h-screen overflow-hidden">
       {/* Backspace icon - sticky positioned */}
-      <Link to={"/"}>
-        <div className="fixed top-8 left-4 z-20">
-          <ArrowLeft size={30} className="text-white" />
-        </div>
-      </Link>
+      <div className="fixed top-8 left-4 z-20">
+        <ArrowLeft
+          onClick={() => navigate(-1)}
+          size={30}
+          className="text-white"
+        />
+      </div>
       <div
         style={{
           height: "100vh",
@@ -332,10 +336,7 @@ function Reel({ listOfVideos }) {
       </div>
 
       {openCommentPanelId && (
-        <CommentPanel
-          foodId={openCommentPanelId}
-          onClose={closeCommentPanel}
-        />
+        <CommentPanel foodId={openCommentPanelId} onClose={closeCommentPanel} />
       )}
     </div>
   );

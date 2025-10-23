@@ -123,12 +123,17 @@ async function removeFromWatchlist(req, res) {
 }
 
 async function comment(req, res) {
-  const userId = req.user._id;
+  const userId = req.user && req.user._id;
   const foodId = req.params.foodId;
   const { comment } = req.body;
   if (!foodId) {
     return res.status(401).json({
       message: "Missing Food ID",
+    });
+  }
+  if (!userId) {
+    return res.status(401).json({
+      message: "Missing User ID",
     });
   }
   const commentMade = await commentModel.create({
