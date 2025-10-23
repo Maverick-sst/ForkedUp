@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { FaHome, FaUser } from "react-icons/fa";
 import axios from "axios";
 import CartButton from "../../components/CartButton";
+import BottomNav from "../../components/BottomNav";
 function Profile() {
   const [activeBtn, setActiveBtn] = useState("liked"); // default tab
   const [likedReels, setlikedReels] = useState([]);
@@ -58,7 +59,26 @@ function Profile() {
   }, [activeBtn]);
 
   // to display reels in required grid
+  // const handleVideoClick = (foodId) => {
+  //   navigate(`/food-partner/${id}/${foodId}`);
+  // };
 
+  const handleMouseEnter = (videoId) => {
+    const video = videoRefs.current.get(videoId);
+    if (video) {
+      video.play().catch((err) => {
+        console.log("Autoplay prevented:", err);
+      });
+    }
+  };
+
+  const handleMouseLeave = (videoId) => {
+    const video = videoRefs.current.get(videoId);
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+    }
+  };
   return (
     <div className="relative flex flex-col h-screen bg-brand-offwhite">
       {/* Back button */}
@@ -124,7 +144,12 @@ function Profile() {
           // likedReels
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
             {likedReels.map((item) => (
-              <div key={item._id.toString()} className="aspect-w-9 aspect-h-16">
+              <div
+                key={item._id.toString()}
+                onMouseEnter={() => handleMouseEnter(item._id)}
+                onMouseLeave={() => handleMouseLeave(item._id)}
+                className="aspect-w-9 aspect-h-16"
+              >
                 <div className="w-full h-full bg-gray-200 rounded-lg">
                   <video
                     ref={(el) => {
@@ -151,7 +176,12 @@ function Profile() {
           // savedReels
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
             {savedReels.map((item) => (
-              <div key={item._id.toString()} className="aspect-w-9 aspect-h-16">
+              <div
+                key={item._id.toString()}
+                onMouseEnter={() => handleMouseEnter(item._id)}
+                onMouseLeave={() => handleMouseLeave(item._id)}
+                className="aspect-w-9 aspect-h-16"
+              >
                 <div className="w-full h-full bg-gray-200 rounded-lg">
                   <video
                     ref={(el) => {
@@ -179,15 +209,7 @@ function Profile() {
 
       <CartButton />
 
-      {/* Bottom navigation */}
-      <div className="fixed bottom-0 w-full px-8 py-2 flex justify-between items-center bg-black/30 backdrop-blur-md z-10">
-        <Link to={"/"}>
-          <FaHome size={24} className="text-white" />
-        </Link>
-        <Link to={"/profile"}>
-          <FaUser size={24} className="text-white" />
-        </Link>
-      </div>
+      <BottomNav />
     </div>
   );
 }

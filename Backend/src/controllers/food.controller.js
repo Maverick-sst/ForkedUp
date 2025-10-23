@@ -43,73 +43,31 @@ async function createFood(req, res) {
 }
 
 async function getFoodItems(req, res) {
-  const userId = req.user ? req.user._id : null;
+  // Pagination parameters
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const skip = (page - 1) * limit;
 
   try {
-    const foodItems = await foodModel.aggregate([
-      {
-        $lookup: {
-          from: "likemodels",
-          let: { videoId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$video", "$$videoId"] },
-                    userId
-                      ? { $eq: ["$user", new mongoose.Types.ObjectId(userId)] }
-                      : {},
-                  ],
-                },
-              },
-            },
-          ],
-          as: "userLike",
-        },
-      },
-      {
-        $addFields: {
-          likedByUser: { $gt: [{ $size: "$userLike" }, 0] },
-        },
-      },
-      {
-        $lookup: {
-          from: "savemodels",
-          let: { videoId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$video", "$$videoId"] },
-                    userId
-                      ? { $eq: ["$user", new mongoose.Types.ObjectId(userId)] }
-                      : {},
-                  ],
-                },
-              },
-            },
-          ],
-          as: "userSave",
-        },
-      },
-      {
-        $addFields: {
-          savedByUser: { $gt: [{ $size: "$userSave" }, 0] },
-        },
-      },
-      {
-        $project: {
-          userLike: 0,
-          userSave: 0,
-        },
-      },
-    ]);
+    // 1. Get total count for pagination
+    const totalItems = await foodModel.countDocuments();
+
+    // 2. Fetch paginated food items, sorted by newest
+    const foodItems = await foodModel
+      .find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    const totalPages = Math.ceil(totalItems / limit);
+    const hasMore = page < totalPages;
 
     res.status(200).json({
       message: "Food Items Fetched Successfully",
-      foodItems,
+      foodItems, // This is now a simple array of food documents
+      currentPage: page,
+      totalPages: totalPages,
+      hasMore: hasMore,
+      totalItems: totalItems,
     });
   } catch (error) {
     console.error("Failed to fetch food feed:", error);

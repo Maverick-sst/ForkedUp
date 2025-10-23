@@ -1,8 +1,8 @@
-// foodPartner_Profile.jsx
 import { React, useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import CartButton from "../../components/CartButton";
+import BottomNav from "../../components/BottomNav";
 
 const FoodPartnerProfile = () => {
   const { id } = useParams();
@@ -10,8 +10,6 @@ const FoodPartnerProfile = () => {
   const [videos, SetVideos] = useState([]);
   const [profile, SetProfile] = useState({});
   const navigate = useNavigate();
-  // const [successMsg, SetSuccessMsg] = useState("");
-  // const [errMsg, SetErrMsg] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -110,7 +108,6 @@ const FoodPartnerProfile = () => {
             key={item._id.toString()}
             onMouseEnter={() => handleMouseEnter(item._id)}
             onMouseLeave={() => handleMouseLeave(item._id)}
-            
             className="aspect-w-9 aspect-h-16"
           >
             <div className="w-full h-full bg-gray-200 rounded-lg">
@@ -133,7 +130,7 @@ const FoodPartnerProfile = () => {
       </div>
       <CartButton />
       {/* Glassmorphism Menu Button */}
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2">
+      <div className="fixed bottom-14 left-1/2 transform -translate-x-1/2">
         <button
           className="
             px-12 py-4
@@ -151,6 +148,8 @@ const FoodPartnerProfile = () => {
           Menu
         </button>
       </div>
+      {/* {sticky bottom nav} */}
+      <BottomNav />
     </div>
   );
 };

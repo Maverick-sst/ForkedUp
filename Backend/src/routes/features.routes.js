@@ -5,6 +5,7 @@ const {
   like,
   addToWatchlist,
   removeFromWatchlist,
+  getInteractionsForVideos,
 } = require("../controllers/feedfeatures.controller");
 const router = express.Router();
 
@@ -17,4 +18,7 @@ router.delete("/like", authMiddleware, dislike);
 router.post("/save", authMiddleware, addToWatchlist);
 // DELETE api/feature/save---user
 router.delete("/save", authMiddleware, removeFromWatchlist);
+
+// GET /api/feature/interactions?ids=id1,id2,id3
+router.get("/interactions", authMiddleware, getInteractionsForVideos);
 module.exports = router;

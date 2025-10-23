@@ -149,48 +149,101 @@ async function comment(req, res) {
 }
 
 async function getComments(req, res) {
-    const foodId = req.params.foodId;
-    // Default to page 1, limit 15 comments per page
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 15;
-    const skip = (page - 1) * limit;
+  const foodId = req.params.foodId;
+  // Default to page 1, limit 15 comments per page
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 15;
+  const skip = (page - 1) * limit;
 
-    if (!foodId || !mongoose.Types.ObjectId.isValid(foodId)) {
-        return res.status(400).json({ message: "Invalid or missing Food ID." });
-    }
+  if (!foodId || !mongoose.Types.ObjectId.isValid(foodId)) {
+    return res.status(400).json({ message: "Invalid or missing Food ID." });
+  }
 
-    try {
-        const commentsQuery = commentModel.find({ food: foodId })
-            .sort({ createdAt: -1 }) // Show newest comments first
-            .skip(skip)
-            .limit(limit)
-            .populate('user', 'userName name profilePhoto'); // Populate user details (adjust fields as needed)
+  try {
+    const commentsQuery = commentModel
+      .find({ food: foodId })
+      .sort({ createdAt: -1 }) // Show newest comments first
+      .skip(skip)
+      .limit(limit)
+      .populate("user", "userName name profilePhoto"); // Populate user details (adjust fields as needed)
 
-        const totalCommentsQuery = commentModel.countDocuments({ food: foodId });
+    const totalCommentsQuery = commentModel.countDocuments({ food: foodId });
 
-        // Execute queries concurrently
-        const [comments, totalComments] = await Promise.all([
-             commentsQuery.exec(),
-             totalCommentsQuery.exec()
-        ]);
+    // Execute queries concurrently
+    const [comments, totalComments] = await Promise.all([
+      commentsQuery.exec(),
+      totalCommentsQuery.exec(),
+    ]);
 
+    // Determine if there are more comments to load
+    const hasMore = skip + comments.length < totalComments;
 
-        // Determine if there are more comments to load
-        const hasMore = (skip + comments.length) < totalComments;
+    return res.status(200).json({
+      message: "Comments fetched successfully",
+      comments: comments,
+      currentPage: page,
+      totalPages: Math.ceil(totalComments / limit),
+      totalComments: totalComments,
+      hasMore: hasMore,
+    });
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to fetch comments due to server error." });
+  }
+}
+async function getInteractionsForVideos(req, res) {
+  if (!req.user || req.role !== "user") {
+    return res.status(401).json({ message: "User authentication required." });
+  }
 
-        return res.status(200).json({
-            message: "Comments fetched successfully",
-            comments: comments,
-            currentPage: page,
-            totalPages: Math.ceil(totalComments / limit),
-            totalComments: totalComments,
-            hasMore: hasMore
-        });
+  const userId = req.user._id;
+  const { ids } = req.query; // Expecting ?ids=id1,id2,id3
 
-    } catch (error) {
-        console.error("Error fetching comments:", error);
-        return res.status(500).json({ message: "Failed to fetch comments due to server error." });
-    }
+  if (!ids) {
+    return res.status(400).json({ message: "No video IDs provided." });
+  }
+
+  // Convert comma-separated string into an array of valid ObjectIds
+  const videoIds = ids
+    .split(",")
+    .filter((id) => mongoose.Types.ObjectId.isValid(id))
+    .map((id) => new mongoose.Types.ObjectId(id));
+
+  if (videoIds.length === 0) {
+    return res.status(200).json({ liked: [], saved: [] }); // Return empty if no valid IDs
+  }
+
+  try {
+    // Find all likes by this user for the given video IDs
+    const userLikes = await Like.find({
+      user: userId,
+      video: { $in: videoIds },
+    }).select("video -_id"); // Only select the video ID
+
+    // Find all saves by this user for the given video IDs
+    const userSaves = await saveSchemaModel
+      .find({
+        user: userId,
+        video: { $in: videoIds },
+      })
+      .select("video -_id"); // Only select the video ID
+
+    // Map results to simple arrays of IDs
+    const likedIds = userLikes.map((like) => like.video.toString());
+    const savedIds = userSaves.map((save) => save.video.toString());
+
+    res.status(200).json({
+      liked: likedIds,
+      saved: savedIds,
+    });
+  } catch (error) {
+    console.error("Error fetching interactions:", error);
+    res
+      .status(500)
+      .json({ message: "Server error while fetching interactions." });
+  }
 }
 module.exports = {
   like,
@@ -198,5 +251,6 @@ module.exports = {
   dislike,
   removeFromWatchlist,
   comment,
-  getComments
+  getComments,
+  getInteractionsForVideos,
 };
