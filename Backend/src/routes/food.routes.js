@@ -3,14 +3,18 @@ const foodController = require("../controllers/food.controller");
 const { authMiddleware } = require("../middlewares/auth.middleware");
 const likedReelsController = require("../controllers/UserProfileController/likedreels.controller.js");
 const savedReelsController = require("../controllers/UserProfileController/savedreels.controller.js");
-const { comment , getComments} = require("../controllers/feedfeatures.controller.js");
+const {
+  comment,
+  getComments,
+} = require("../controllers/feedfeatures.controller.js");
 const router = express.Router();
-
 
 // POST /api/food/ - Create food (Partner)
 router.post("/", authMiddleware, foodController.createFood);
 // GET /api/food/ - Get food feed (User)
 router.get("/", authMiddleware, foodController.getFoodItems);
+// GET /api/food/search?q=...&partnerId=... (partnerId is optional)
+router.get("/search", authMiddleware, foodController.searchFoodItems);
 // GET /api/food/user/likedreels - Get liked reels (User)
 router.get("/user/likedreels", authMiddleware, likedReelsController);
 // GET /api/food/user/savedreels - Get saved reels (User)

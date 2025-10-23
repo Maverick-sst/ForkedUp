@@ -55,6 +55,12 @@ const foodSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
+foodSchema.index({
+  name: "text",
+  description: "text",
+  cuisine: "text",
+  category: "text",
+  dietaryPreference: "text",
+});
 const foodModel = mongoose.model("foodModel", foodSchema);
 module.exports = foodModel;

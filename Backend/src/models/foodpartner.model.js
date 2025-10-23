@@ -64,6 +64,11 @@ const foodPartnerSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    followerCount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
   },
   {
     timestamps: true,

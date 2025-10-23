@@ -1,4 +1,5 @@
 const foodModel = require("../models/food.model");
+const foodPartner = require("../models/foodpartner.model");
 const mongoose = require("mongoose");
 
 async function createFood(req, res) {
@@ -75,4 +76,62 @@ async function getFoodItems(req, res) {
   }
 }
 
-module.exports = { createFood, getFoodItems };
+async function searchFoodItems(req, res) {
+  const searchTerm = req.query.q || ""; // Get search term from query param 'q'
+  const partnerId = req.query.partnerId; // Optional partner ID filter
+  const limit = parseInt(req.query.limit, 10) || 20; // Limit results
+
+  if (!searchTerm.trim()) {
+    return res
+      .status(200)
+      .json({ message: "Search term is empty", results: [] });
+  }
+
+  // Create a case-insensitive regex
+  const regex = new RegExp(searchTerm.trim(), "i");
+
+  try {
+    // Base query filters
+    const queryConditions = {
+      $or: [
+        { name: regex }, // Search by dish name
+        { description: regex }, // Search by description
+        { cuisine: regex }, // Search by cuisine
+        { category: regex }, // Search by category
+        { dietaryPreference: regex }, // Search by dietary preference
+      ],
+    };
+
+    // Add partner filter if partnerId is provided
+    if (partnerId && mongoose.Types.ObjectId.isValid(partnerId)) {
+      queryConditions.foodPartner = partnerId; //
+    } else if (partnerId) {
+      console.warn("Invalid partnerId provided for search:", partnerId);
+    } else {
+      // Global Search: Also search by partner name
+      const matchingPartners = await foodPartner
+        .find({ name: regex })
+        .select("_id"); //
+      const matchingPartnerIds = matchingPartners.map((p) => p._id);
+
+      if (matchingPartnerIds.length > 0) {
+        // Add partner name match condition
+        queryConditions.$or.push({ foodPartner: { $in: matchingPartnerIds } }); //
+      }
+    }
+
+    const results = await foodModel
+      .find(queryConditions)
+      .limit(limit)
+      .populate("foodPartner", "name profilePhoto"); // Populate basic partner info
+
+    res.status(200).json({
+      message: `Search results for "${searchTerm}"`,
+      results: results,
+    });
+  } catch (error) {
+    console.error("Error searching food items:", error);
+    res.status(500).json({ message: "Server error during search." });
+  }
+}
+module.exports = { createFood, getFoodItems, searchFoodItems };

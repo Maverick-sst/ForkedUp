@@ -1,5 +1,6 @@
 const foodPartnerModel = require("../models/foodpartner.model");
 const foodModel = require("../models/food.model");
+const mongoose = require("mongoose");
 
 async function getFoodItemsByPartner(req, res) {
   const foodPartnerId = req.params.id;
@@ -81,4 +82,70 @@ async function updateProfile(req, res) {
     });
   }
 }
-module.exports = { getFoodItemsByPartner, updateProfile };
+
+async function getMenuSummary(req, res) {
+  const foodPartnerId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(foodPartnerId)) {
+    return res.status(400).json({ message: "Invalid Food Partner ID format." });
+  }
+
+  try {
+    // Use aggregation to group and count items
+    const summary = await foodModel.aggregate([
+      // Stage 1: Match documents for the specific food partner
+      {
+        $match: { foodPartner: new mongoose.Types.ObjectId(foodPartnerId) }, //
+      },
+      // Stage 2: Group by multiple criteria using $facet
+      {
+        $facet: {
+          categories: [
+            { $group: { _id: "$category", count: { $sum: 1 } } }, //
+            { $sort: { count: -1 } },
+          ],
+          cuisines: [
+            { $match: { cuisine: { $ne: null, $ne: "" } } }, // Filter out null/empty
+            { $group: { _id: "$cuisine", count: { $sum: 1 } } }, //
+            { $sort: { count: -1 } },
+          ],
+          dietaryPreferences: [
+            { $group: { _id: "$dietaryPreference", count: { $sum: 1 } } }, //
+            { $sort: { count: -1 } },
+          ],
+          totalItems: [{ $count: "count" }],
+        },
+      },
+      // Stage 3: Reshape the output
+      {
+        $project: {
+          totalItems: {
+            $ifNull: [{ $arrayElemAt: ["$totalItems.count", 0] }, 0],
+          },
+          categories: "$categories",
+          cuisines: "$cuisines",
+          dietaryPreferences: "$dietaryPreferences",
+        },
+      },
+    ]);
+
+    const result = summary[0] || {
+      totalItems: 0,
+      categories: [],
+      cuisines: [],
+      dietaryPreferences: [],
+    };
+
+    res.status(200).json({
+      message: "Menu summary fetched successfully.",
+      summary: result,
+    });
+  } catch (error) {
+    console.error("Error fetching menu summary:", error);
+    res
+      .status(500)
+      .json({ message: "Server error while fetching menu summary." });
+  }
+}
+
+module.exports = { getFoodItemsByPartner, updateProfile, getMenuSummary };
