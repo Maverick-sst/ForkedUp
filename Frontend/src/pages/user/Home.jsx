@@ -6,6 +6,7 @@ import axios from "axios";
 import BottomNav from "../../components/BottomNav";
 import SearchResultItem from "../../components/SearchResultItem";
 import _ from "lodash";
+import { FaMapMarkerAlt } from "react-icons/fa";
 function Home() {
   const { location, status, requestLocation } = useGeoLocation();
   const [address, setAddress] = useState(() => {
@@ -16,6 +17,33 @@ function Home() {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [username, setUsername] = useState("User");
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      setLoadingUser(true);
+      try {
+        const response = await axios.get("http://localhost:8000/api/me", {
+          withCredentials: true,
+        });
+        if (response.data?.user?.userName) {
+          setUsername(response.data.user.userName);
+        } else {
+          // Fallback if username isn't found, but user data exists
+          setUsername("User");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user details:", error);
+        // Keep default "User" or handle error appropriately
+        setUsername("User");
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+
+    fetchUserDetails();
+  }, []);
 
   useEffect(() => {
     if (!address && status !== "denied") {
@@ -90,25 +118,30 @@ function Home() {
       <div className="relative z-10 flex flex-col h-full">
         {/* Top bar: location + user profile */}
         <div className="flex justify-between items-center px-4 py-4 bg-white/70 backdrop-blur-md rounded-b-xl shadow">
-          <div className="text-sm px-3 py-1 rounded-lg border">
-            {status === "ready" || address
-              ? address
-              : status === "loading"
-              ? "Detecting..."
-              : status === "denied"
-              ? "Location blocked"
-              : "Set location"}
+          <div className="flex items-center gap-2 text-sm border px-3 py-1.5 rounded-lg flex-shrink min-w-0 mr-2">
+            <FaMapMarkerAlt className="text-brand-orange flex-shrink-0" />
+            <span className="truncate">
+              {status === "ready" || address
+                ? address
+                : status === "loading"
+                ? "Detecting..."
+                : status === "denied"
+                ? "Location blocked"
+                : "Set location"}
+            </span>
             {status !== "ready" && status !== "loading" && !address && (
               <button
                 onClick={requestLocation}
-                className="ml-2 px-2 py-0.5 rounded text-xs bg-brand-orange text-white"
+                className="ml-2 px-2 py-0.5 rounded text-xs bg-brand-orange text-white flex-shrink-0"
               >
                 Detect
               </button>
             )}
           </div>
-          <Link to="/profile">Hey, Username</Link>{" "}
-          {/* TODO: Fetch actual username */}
+          {/* User Profile Link */}
+          <Link to="/profile" className="text-xl font-medium text-brand-gray whitespace-nowrap hover:text-brand-orange flex-shrink-0">
+            Hey, {loadingUser ? "..." : username}!
+          </Link>
         </div>
 
         {/* Search bar */}

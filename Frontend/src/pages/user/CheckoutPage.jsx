@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -8,7 +8,9 @@ import {
   FaRegAddressCard,
   FaCreditCard,
   FaSave,
+  FaCrosshairs,
 } from "react-icons/fa";
+import { useGeoLocation } from "../../hooks/useGeoLocation";
 
 export default function CheckoutPage() {
   const { cartItems, totalAmount, clearCart } = useCart();
@@ -29,6 +31,10 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [orderJustPlaced, setOrderJustPlaced] = useState(false);
+
+  const { location, status: geoStatus, requestLocation } = useGeoLocation();
+  const [isFetchingGeoAddress, setIsFetchingGeoAddress] = useState(false);
 
   useEffect(() => {
     const fetchUserDetailsAndLocalStorage = async () => {
@@ -56,13 +62,16 @@ export default function CheckoutPage() {
           useManual = false;
         } else {
           setUserAddresses([]);
+          useManual = true;
         }
       } catch (error) {
         console.error("Failed to fetch user details:", error);
+        useManual = true;
       }
 
       setIsUsingManualAddress(useManual);
 
+      // Pre-fill manual formatted address from local storage ONLY if using manual mode initially
       if (useManual) {
         const storedAddress = localStorage.getItem("userAddress");
         if (storedAddress && !manualFormattedAddress) {
@@ -78,13 +87,75 @@ export default function CheckoutPage() {
     }
 
     fetchUserDetailsAndLocalStorage();
-  }, []);
+    // Intentionally excluding cartItems, isLoading, navigate, manualFormattedAddress from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
+  // Effect to handle navigation if cart becomes empty after initial load
+  // but NOT immediately after placing an order.
   useEffect(() => {
-    if (!isLoading && cartItems.length === 0) {
+    // Only redirect if loading is finished, cart is empty, AND an order wasn't just placed
+    if (!isLoading && cartItems.length === 0 && !orderJustPlaced) {
+      console.log(
+        "Cart is empty and order not just placed, navigating back to cart."
+      );
       navigate("/cart", { replace: true });
     }
-  }, [cartItems, isLoading, navigate]);
+    // If orderJustPlaced was true, this effect does nothing, allowing the /order-success navigation to proceed.
+  }, [cartItems, isLoading, navigate, orderJustPlaced]);
+
+  // --- Effect to fetch formatted address when location updates ---
+  useEffect(() => {
+    if (location && geoStatus === "ready" && isFetchingGeoAddress) {
+      // Only fetch if we triggered it
+      const fetchFormattedAddress = async () => {
+        setErrorMessage(""); // Clear previous errors
+        try {
+          const response = await axios.get(
+            `http://localhost:8000/api/location/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
+          );
+          const formattedAddress = response.data.address;
+          if (formattedAddress) {
+            setManualFormattedAddress(formattedAddress); // Update the state
+            // Also clear other manual fields if desired when auto-filling
+            setManualStreet("");
+            setManualBlock("");
+            setManualBuilding("");
+            setManualFloor("");
+            setManualLandmark("");
+          } else {
+            setErrorMessage("Could not find address for current location.");
+          }
+        } catch (error) {
+          console.error("Error fetching formatted address:", error);
+          setErrorMessage(
+            error.response?.data?.message ||
+              "Failed to fetch address for current location."
+          );
+        } finally {
+          setIsFetchingGeoAddress(false); // Reset fetching trigger
+        }
+      };
+      fetchFormattedAddress();
+    } else if (
+      geoStatus === "denied" ||
+      geoStatus === "error" ||
+      geoStatus === "unsupported"
+    ) {
+      if (isFetchingGeoAddress) {
+        setErrorMessage(
+          `Could not get location: ${geoStatus}. Please enable permissions or enter manually.`
+        );
+        setIsFetchingGeoAddress(false); // Reset trigger even on error
+      }
+    }
+  }, [location, geoStatus, isFetchingGeoAddress]);
+
+  const handleRequestLocationClick = useCallback(() => {
+    setIsFetchingGeoAddress(true);
+    setErrorMessage("");
+    requestLocation();
+  }, [requestLocation]);
 
   const getFinalDeliveryLocationObject = () => {
     if (!isUsingManualAddress && userAddresses.length > selectedAddressIndex) {
@@ -106,6 +177,9 @@ export default function CheckoutPage() {
         !manualBlock.trim() &&
         !manualBuilding.trim()
       ) {
+        setErrorMessage(
+          "Please provide address details (Formatted Address or Street/Block/Building)."
+        );
         return null;
       }
 
@@ -129,32 +203,29 @@ export default function CheckoutPage() {
     setErrorMessage("");
     const finalLocationObject = getFinalDeliveryLocationObject();
 
-    if (cartItems.length === 0) {
-      /* ... set error, return ... */
-    }
     if (!finalLocationObject) {
-      /* ... set error, return ... */
+      setIsPlacingOrder(false);
+      return;
+    }
+    if (cartItems.length === 0) {
+      setErrorMessage("Your cart is empty.");
+      setIsPlacingOrder(false);
+      return;
     }
 
     let addressToUseForOrder = finalLocationObject;
 
     if (isUsingManualAddress && saveNewAddress) {
       try {
-        console.log("Attempting to save new address:", {
-          label: newAddressLabel,
-          location: finalLocationObject,
-        });
-
-        const saveResponse = await axios.patch(
+        await axios.patch(
           "http://localhost:8000/api/user/addresses",
           { label: newAddressLabel, location: finalLocationObject },
           { withCredentials: true }
         );
-        console.log("Address save successful:", saveResponse.data);
       } catch (error) {
         console.error("Failed to save new address:", error);
         setErrorMessage(
-          `Could not save the new address: ${
+          `Could not save new address: ${
             error.response?.data?.message || error.message
           }. Order not placed.`
         );
@@ -163,7 +234,6 @@ export default function CheckoutPage() {
       }
     }
 
-    // Prepare Order Payload
     const orderPayload = {
       items: cartItems.map((item) => ({
         food: item.foodId,
@@ -172,35 +242,37 @@ export default function CheckoutPage() {
       })),
       totalAmount: totalAmount,
       deliveryAddress: addressToUseForOrder,
-      paymentDetails: {
-        method: paymentMethod,
-        status: "pending",
-      },
+      paymentDetails: { method: paymentMethod, status: "pending" },
       foodPartner: cartItems.length > 0 ? cartItems[0].foodPartnerId : null,
     };
 
     if (!orderPayload.foodPartner) {
-      /* ... set error, return ... */
+      setErrorMessage(
+        "Cannot place order - missing restaurant information in cart."
+      );
+      setIsPlacingOrder(false);
+      return;
     }
 
-    // Place Order
+    // Place Order Logic
     try {
-      console.log("Placing order with payload:", orderPayload);
-
       const orderResponse = await axios.post(
         "http://localhost:8000/api/orders",
         orderPayload,
         { withCredentials: true }
       );
-
       console.log("Order placed successfully:", orderResponse.data);
-      alert("Order Placed Successfully!");
-      clearCart();
+
       const newOrderId = orderResponse.data.order?._id;
+
       if (newOrderId) {
+        setOrderJustPlaced(true);
         navigate(`/order-success/${newOrderId}`);
+        clearCart();
       } else {
         console.error("Order created but ID missing in response");
+        setOrderJustPlaced(true);
+        clearCart(); // Clear cart even on fallback navigation
         navigate("/");
       }
     } catch (error) {
@@ -209,6 +281,7 @@ export default function CheckoutPage() {
         error.response?.data?.message ||
           "Failed to place order. Please try again."
       );
+      // Do NOT clear cart on error, user might want to retry
     } finally {
       setIsPlacingOrder(false);
     }
@@ -216,34 +289,37 @@ export default function CheckoutPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-brand-offwhite">
+      // Keep loading state as is
+      <div className="flex justify-center items-center h-full">
         Loading Checkout...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-brand-offwhite font-body pb-24">
-      {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-20 p-4 flex items-center">
+    <div className="flex flex-col h-full bg-brand-offwhite font-body">
+      {/* Header - Sticky */}
+      <div className="bg-white shadow-sm sticky top-0 z-20 p-4 flex items-center flex-shrink-0">
         <button
           onClick={() => navigate("/cart")}
           className="text-brand-gray mr-4"
         >
           <IoArrowBack size={24} />
         </button>
-        <h1 className="font-heading text-xl text-brand-gray">Checkout</h1>
+        <h1 className="font-heading text-xl text-brand-gray flex-grow text-center pr-8">
+          Checkout
+        </h1>{" "}
+        {/* Centered title */}
       </div>
 
-      <div className="p-4 space-y-4">
-        {/* Map Placeholder */}
+      <div className="flex-grow overflow-y-auto p-4 space-y-4 pb-20 scrollbar-hide">
+        {/* Map Placeholder (Keep as is) */}
         <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
           <h2 className="font-heading text-lg text-brand-gray mb-3 self-start flex items-center gap-2">
             <FaMapMarkerAlt /> Delivery Location
           </h2>
           <div className="w-32 h-32 md:w-40 md:h-40 bg-green-100 border-2 border-dashed border-green-400 rounded-full flex items-center justify-center text-center text-green-700 text-xs md:text-sm p-4">
             Map Placeholder
-            {/* TODO: Add Map Integration */}
           </div>
         </div>
 
@@ -252,11 +328,12 @@ export default function CheckoutPage() {
           <h2 className="font-heading text-lg text-brand-gray mb-3 flex items-center gap-2">
             <FaRegAddressCard /> Delivery Address
           </h2>
+          {/* Display general error messages here */}
           {errorMessage && (
             <p className="text-sm text-red-600 mb-3">{errorMessage}</p>
           )}
 
-          {/* Radio buttons to choose address type */}
+          {/* Radio buttons (Keep as is) */}
           <div className="flex gap-4 mb-4">
             {userAddresses.length > 0 && (
               <label className="flex items-center gap-2 cursor-pointer">
@@ -282,7 +359,7 @@ export default function CheckoutPage() {
             </label>
           </div>
 
-          {/* Saved Address Selector */}
+          {/* Saved Address Selector (Keep as is) */}
           {!isUsingManualAddress && userAddresses.length > 0 && (
             <select
               value={selectedAddressIndex}
@@ -303,57 +380,108 @@ export default function CheckoutPage() {
           {/* Manual Address Input Fields */}
           {isUsingManualAddress && (
             <div className="space-y-2 border-t pt-3 mt-3">
-              <h3 className="text-md font-semibold text-brand-gray mb-1">
+              <h3 className="text-md font-semibold text-brand-gray mb-2">
+                {" "}
+                {/* Increased margin */}
                 Enter New Address Details:
               </h3>
-              <input
-                type="text"
-                placeholder="Street Address"
-                value={manualStreet}
-                onChange={(e) => setManualStreet(e.target.value)}
-                className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  placeholder="Block / Sector"
-                  value={manualBlock}
-                  onChange={(e) => setManualBlock(e.target.value)}
-                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+              <div className="relative mb-2">
+                {" "}
+                {/* Added margin bottom */}
+                <label htmlFor="manualFormattedAddress" className="sr-only">
+                  Formatted Address
+                </label>
+                <textarea
+                  id="manualFormattedAddress"
+                  placeholder="Full Address (e.g., House No, Street, Area)"
+                  value={manualFormattedAddress}
+                  onChange={(e) => setManualFormattedAddress(e.target.value)}
+                  rows="2"
+                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2 pr-10 resize-none" // Added resize-none
                 />
-                <input
-                  type="text"
-                  placeholder="Building Name"
-                  value={manualBuilding}
-                  onChange={(e) => setManualBuilding(e.target.value)}
-                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
-                />
+                <button
+                  type="button"
+                  onClick={handleRequestLocationClick}
+                  disabled={geoStatus === "loading" || isFetchingGeoAddress} // Disable while loading
+                  className="absolute top-2 right-2 p-1 text-brand-gray hover:text-brand-orange disabled:text-gray-400 disabled:cursor-wait"
+                  aria-label="Use current location"
+                >
+                  {geoStatus === "loading" || isFetchingGeoAddress ? (
+                    <svg
+                      className="animate-spin h-5 w-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  ) : (
+                    <FaCrosshairs size={18} />
+                  )}
+                </button>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  placeholder="Floor / Apt No."
-                  value={manualFloor}
-                  onChange={(e) => setManualFloor(e.target.value)}
-                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
-                />
-                <input
-                  type="text"
-                  placeholder="Landmark (Optional)"
-                  value={manualLandmark}
-                  onChange={(e) => setManualLandmark(e.target.value)}
-                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
-                />
-              </div>
-              <textarea
-                placeholder="Formatted Address (Optional, if different from auto)"
-                value={manualFormattedAddress}
-                onChange={(e) => setManualFormattedAddress(e.target.value)}
-                rows="2"
-                className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
-              />
 
-              {/* Address Label & Save Checkbox */}
+              {(geoStatus === "loading" || isFetchingGeoAddress) && (
+                <p className="text-xs text-blue-600 mb-2">
+                  Fetching location...
+                </p>
+              )}
+
+              <div>
+                <input
+                  type="text"
+                  placeholder="Street Address"
+                  value={manualStreet}
+                  onChange={(e) => setManualStreet(e.target.value)}
+                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2 mb-2"
+                />
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <input
+                    type="text"
+                    placeholder="Block / Sector"
+                    value={manualBlock}
+                    onChange={(e) => setManualBlock(e.target.value)}
+                    className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Building Name"
+                    value={manualBuilding}
+                    onChange={(e) => setManualBuilding(e.target.value)}
+                    className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <input
+                    type="text"
+                    placeholder="Floor / Apt No."
+                    value={manualFloor}
+                    onChange={(e) => setManualFloor(e.target.value)}
+                    className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Landmark (Optional)"
+                    value={manualLandmark}
+                    onChange={(e) => setManualLandmark(e.target.value)}
+                    className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
+                  />
+                </div>
+              </div>
+
+              {/* Address Label & Save Checkbox (Keep as is) */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-brand-gray">
@@ -391,7 +519,7 @@ export default function CheckoutPage() {
           )}
         </div>
 
-        {/* Payment Method Section */}
+        {/* Payment Method Section (Keep as is) */}
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="font-heading text-lg text-brand-gray mb-3 flex items-center gap-2">
             <FaCreditCard /> Payment Method
@@ -433,12 +561,11 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* Fixed Footer with Place Order Button */}
-      <div className="fixed bottom-0 left-0 w-full bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] border-t p-3 z-10">
+      <div className="absolute bottom-0 left-0 w-full max-w-[450px] mx-auto bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] border-t p-3 z-10 flex-shrink-0">
         <button
           onClick={handlePlaceOrder}
           disabled={isPlacingOrder || isLoading}
-          className={`w-full max-w-md mx-auto block py-3 px-6 text-white font-heading rounded-lg shadow transition-opacity ${
+          className={`w-full py-3 px-6 text-white font-heading rounded-lg shadow transition-opacity ${
             isPlacingOrder || isLoading
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-brand-green hover:opacity-90"
@@ -446,7 +573,11 @@ export default function CheckoutPage() {
         >
           {isPlacingOrder
             ? "Processing..."
-            : `Place Order (₹${totalAmount.toFixed(2)})`}
+            : `Place Order (₹${
+                typeof totalAmount === "number"
+                  ? totalAmount.toFixed(2)
+                  : "0.00"
+              })`}
         </button>
       </div>
     </div>

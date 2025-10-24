@@ -1,11 +1,9 @@
-// Frontend/src/components/CartButton.jsx
-import React from "react";
 import { Link } from "react-router-dom";
 import { FaShoppingCart } from "react-icons/fa";
 import { useCart } from "../context/CartContext";
 
 // Added positionClass prop for flexibility (e.g., 'fixed bottom-20 right-4')
-const CartButton = ({ positionClass = "fixed bottom-24 right-4" }) => {
+const CartButton = ({ positionClass = "absolute bottom-24 right-4" }) => {
   // Default position slightly above bottom nav
   const { itemCount } = useCart(); // Get item count from cart context
 

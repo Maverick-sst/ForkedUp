@@ -1,37 +1,97 @@
+import { useState, useEffect } from "react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate, Link } from "react-router-dom";
-import { IoArrowBack, IoAdd } from "react-icons/io5"; // Using IoAdd for "Add more items"
-import { FaEdit, FaHome, FaUser } from "react-icons/fa"; // Using FaEdit for "edit"
+import axios from "axios";
+import { IoArrowBack, IoAdd } from "react-icons/io5";
+import { FaEdit, FaVideoSlash } from "react-icons/fa";
+import BottomNav from "../../components/BottomNav";
 
 function CartPage() {
-  const { cartItems, updateItemQuantity, removeItemFromCart, totalAmount } =
-    useCart();
+  const { cartItems, updateItemQuantity, totalAmount } = useCart();
   const navigate = useNavigate();
+  const [partnerDetailsMap, setPartnerDetailsMap] = useState({});
+  const [isLoadingPartners, setIsLoadingPartners] = useState(false);
 
-  // Group items by foodPartnerId
+  useEffect(() => {
+    const fetchPartnerDetails = async () => {
+      if (cartItems.length === 0) {
+        setPartnerDetailsMap({});
+        return;
+      }
+      const partnerIdsInCart = [
+        ...new Set(cartItems.map((item) => item.foodPartnerId)),
+      ];
+      const idsToFetch = partnerIdsInCart.filter(
+        (id) => id && !partnerDetailsMap[id]
+      );
+
+      if (idsToFetch.length === 0) return;
+
+      setIsLoadingPartners(true);
+      try {
+        const partnerPromises = idsToFetch.map((id) =>
+          axios
+            .get(`http://localhost:8000/api/food-partner/${id}`, {
+              withCredentials: true,
+            })
+            .then((res) => ({
+              id,
+              name: res.data?.foodPartner?.name || "Restaurant Unavailable",
+            }))
+            .catch((err) => {
+              console.error(`Failed to fetch partner ${id}:`, err);
+              return { id, name: "Restaurant Error" };
+            })
+        );
+        const results = await Promise.all(partnerPromises);
+        setPartnerDetailsMap((prevMap) => {
+          const newMap = { ...prevMap };
+          results.forEach((partner) => {
+            newMap[partner.id] = { name: partner.name };
+          });
+          return newMap;
+        });
+      } catch (error) {
+        console.error("Error fetching partner details:", error);
+      } finally {
+        setIsLoadingPartners(false);
+      }
+    };
+    fetchPartnerDetails();
+  }, [cartItems]);
+
   const groupedCartItems = cartItems.reduce((acc, item) => {
-    if (!acc[item.foodPartnerId]) {
-      acc[item.foodPartnerId] = {
-        foodPartnerName: "Restro-name",
+    const partnerId = item.foodPartnerId;
+    if (!partnerId) return acc;
+    if (!acc[partnerId]) {
+      acc[partnerId] = {
+        foodPartnerName:
+          partnerDetailsMap[partnerId]?.name ||
+          (isLoadingPartners ? "Loading..." : "Restaurant"),
         items: [],
       };
     }
-    acc[item.foodPartnerId].items.push(item);
+    // *** Ensure item price is valid before adding to group ***
+    if (typeof item.price === "number") {
+      acc[partnerId].items.push(item);
+    } else {
+      console.warn("Skipping item with invalid price:", item);
+    }
     return acc;
   }, {});
 
-  // Handle Checkout button click
   const handleProceedToCheckout = () => {
     if (cartItems.length === 0) {
-      alert("Your cart is empty! Add some items before checking out.");
+      alert("Your cart is empty!");
       return;
     }
     navigate("/checkout");
   };
 
   return (
-    <div className="min-h-screen bg-brand-offwhite font-body pb-20">
-      <div className="bg-white shadow-sm sticky top-0 z-10 p-4 flex items-center justify-center">
+    <div className="flex flex-col h-full bg-brand-offwhite font-body">
+      {/* Header */}
+      <div className="bg-white shadow-sm sticky top-0 z-20 p-4 flex items-center justify-center flex-shrink-0">
         <button
           onClick={() => navigate(-1)}
           className="absolute left-4 text-brand-gray"
@@ -40,9 +100,10 @@ function CartPage() {
         </button>
         <h1 className="font-heading text-xl text-brand-gray">Cart</h1>
       </div>
-      {/* Main Content Area */}
-      <div className="p-4 space-y-6">
-        {Object.entries(groupedCartItems).length === 0 ? (
+
+      {/* Main Content Area - Scrollable */}
+      <div className="flex-grow overflow-y-auto p-4 space-y-6 pb-32 scrollbar-hide">
+        {Object.keys(groupedCartItems).length === 0 ? (
           <div className="flex flex-col items-center justify-center pt-10">
             <p className="text-lg text-brand-gray mb-4">Your cart is empty!</p>
             <button
@@ -73,13 +134,12 @@ function CartPage() {
                       {partnerData.foodPartnerName}
                     </h2>
                   </Link>
-                  {/* Edit button for the whole partner's order*/}
                   <button className="text-sm text-brand-orange flex items-center gap-1">
                     <FaEdit size={14} /> Edit
                   </button>
                 </div>
 
-                {/* Items from this partner */}
+                {/* Items */}
                 <div className="space-y-4">
                   {partnerData.items.map((item) => (
                     <div
@@ -87,25 +147,23 @@ function CartPage() {
                       className="flex gap-4 items-center border-b border-brand-gray-light pb-4 last:border-b-0 last:pb-0"
                     >
                       {/* Video Preview */}
-                      <div className="w-24 h-24 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500 text-xs overflow-hidden">
-                        {/* <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" /> */}
-                        <video src={item.videoUrl} />
-                        Video Preview
+                      <div className="w-24 h-24 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500">
+                        <FaVideoSlash size={24} />
                       </div>
 
-                      <div className="flex-grow flex flex-col justify-between h-24">
+                      {/* Item Details */}
+                      <div className="flex-grow flex flex-col justify-between min-h-[6rem]">
                         <div>
                           <p className="font-semibold text-brand-gray text-base">
                             {item.name}
                           </p>
-                          <p className="text-sm text-gray-500 line-clamp-2">
-                            Description of {item.name}. This is a placeholder
-                            description.
-                          </p>
                         </div>
                         <div className="flex justify-between items-center mt-2">
                           <span className="font-bold text-brand-orange">
-                            ₹{item.price}
+                            {/* Ensure price is a number before formatting */}₹
+                            {typeof item.price === "number"
+                              ? item.price.toFixed(2)
+                              : "N/A"}
                           </span>
                           {/* Quantity Controls */}
                           <div className="flex items-center gap-2 bg-brand-peach rounded-full px-2 py-1">
@@ -139,7 +197,7 @@ function CartPage() {
                           </div>
                         </div>
                       </div>
-                      {/* Edit button for individual item (optional, per wireframe) */}
+                      {/* Optional Edit button */}
                       <button className="text-sm text-brand-gray hover:text-brand-orange transition-colors self-start mt-1">
                         <FaEdit size={16} />
                       </button>
@@ -166,13 +224,17 @@ function CartPage() {
           )
         )}
       </div>
-      {/* Fixed bottom bar with Checkout button and Total */}
+
+      {/* Checkout Footer */}
       {cartItems.length > 0 && (
-        <div className="fixed bottom-10 left-0 w-full bg-white shadow-lg border-t p-4 flex justify-between items-center z-10">
+        <div className="absolute bottom-10 left-0 w-full max-w-[450px] mx-auto bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] border-t p-4 flex justify-between items-center z-10">
           <div className="flex flex-col">
             <span className="text-xs text-gray-500">Total Amount</span>
             <span className="font-semibold text-lg text-brand-orange">
-              ₹{totalAmount}
+              {/* Ensure totalAmount is a number before formatting */}₹
+              {typeof totalAmount === "number"
+                ? totalAmount.toFixed(2)
+                : "0.00"}
             </span>
           </div>
           <button
@@ -183,15 +245,9 @@ function CartPage() {
           </button>
         </div>
       )}
+
       {/* Bottom nav */}
-      <div className="fixed bottom-0 w-full px-8 py-2 flex justify-between items-center bg-white/80 backdrop-blur-md border-t border-gray-200 z-20">
-        <Link to="/">
-          <FaHome size={24} className="text-black" />
-        </Link>
-        <Link to="/profile">
-          <FaUser size={24} className="text-black" />
-        </Link>
-      </div>
+      <BottomNav />
     </div>
   );
 }

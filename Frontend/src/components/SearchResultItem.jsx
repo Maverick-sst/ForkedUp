@@ -1,20 +1,17 @@
-import React from "react";
 import { Link } from "react-router-dom";
-import { useCart } from "../context/CartContext"; // To add to cart directly
+import { useCart } from "../context/CartContext";
 
 function SearchResultItem({ item }) {
   const { addItemToCart } = useCart();
 
   const handleAddToCart = (e) => {
-    e.stopPropagation(); // Prevent link navigation if clicking button
-    // Ensure item has necessary properties before adding
+    e.stopPropagation();
     const itemToAdd = {
-      _id: item._id, // Required by context if using _id as foodId
-      foodId: item._id, // Explicitly add foodId if context uses it
+      foodId: item._id,
       name: item.name,
       price: item.price,
-      foodPartner: item.foodPartner?._id || item.foodPartner, // Ensure we pass the ID
-      // quantity will be handled by context
+      foodPartner: item.foodPartner?._id || item.foodPartner,
+      videoUrl: item.video,
     };
     addItemToCart(itemToAdd);
     console.log(`${item.name} added to Cart`);
@@ -37,7 +34,6 @@ function SearchResultItem({ item }) {
           playsInline
           preload="metadata"
           className="w-full h-full object-cover"
-          // Avoid auto-play on hover in search results for performance
         />
       </div>
 

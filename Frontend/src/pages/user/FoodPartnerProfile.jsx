@@ -19,13 +19,12 @@ const FoodPartnerProfile = () => {
   const [showMenuSummary, setShowMenuSummary] = useState(false);
   const [menuSummary, setMenuSummary] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
-  const [showSearchBar, setShowSearchBar] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const menuButtonRef = useRef(null);
-  const summaryTimeoutRef = useRef(null);
 
   //  Follow State
   const [isFollowing, setIsFollowing] = useState(false);
@@ -35,7 +34,7 @@ const FoodPartnerProfile = () => {
 
   useEffect(() => {
     // Reset states when partnerId changes
-    setShowSearchBar(false);
+
     setSearchTerm("");
     setSearchResults([]);
     setShowMenuSummary(false);
@@ -191,30 +190,6 @@ const FoodPartnerProfile = () => {
     debouncedSearch(newSearchTerm);
   };
 
-  const handleMenuMouseEnter = () => {
-    clearTimeout(summaryTimeoutRef.current);
-    fetchMenuSummary();
-    setShowMenuSummary(true);
-  };
-  const handleMenuMouseLeave = () => {
-    summaryTimeoutRef.current = setTimeout(() => {
-      setShowMenuSummary(false);
-    }, 300);
-  };
-  const handleSummaryMouseEnter = () => {
-    clearTimeout(summaryTimeoutRef.current);
-  };
-  const handleSummaryMouseLeave = () => {
-    setShowMenuSummary(false);
-  };
-  const handleMenuClick = () => {
-    setShowSearchBar(!showSearchBar);
-    setShowMenuSummary(false);
-    setSearchTerm("");
-    setSearchResults([]);
-    setSearchError("");
-  };
-
   const handleVideoClick = (foodId) => {
     navigate(`/food-partner/${partnerId}/${foodId}`);
   };
@@ -281,33 +256,45 @@ const FoodPartnerProfile = () => {
     <div className="bg-white min-h-screen p-4 font-sans pb-24">
       <div className="flex items-center justify-between mb-6">
         {/* Profile Pic and Restro Name */}
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-full bg-gray-300 overflow-hidden">
+        <div className="flex items-center space-x-5">
+          {" "}
+          {/* Increased space-x-4 to space-x-5 */}
+          <div className="w-20 h-20 aspect-square rounded-full bg-gray-300 overflow-hidden shadow">
+            {" "}
+            {/* Increased w-12 h-12 to w-16 h-16, added shadow */}
             <img
               src={
                 profile.profilePhoto ||
                 `https://ui-avatars.com/api/?name=${profile.name?.charAt(
                   0
-                )}&background=random`
+                )}&background=random&size=80` // Optional: Increased size param for avatar API
               }
               alt={profile.name}
               className="w-full h-full object-cover"
             />
           </div>
-          <div>
-            <h1 className="font-heading text-2xl text-brand-gray font-semibold text-gray-800">
+          <div className="flex flex-col gap-0.5">
+            {" "}
+            {/* Added flex flex-col and small gap */}
+            <h1 className="font-heading text-2xl text-brand-gray font-semibold text-gray-800 leading-tight">
+              {" "}
+              {/* Adjusted leading */}
               {profile.name}
             </h1>
             <p className="text-sm text-gray-500">
               {profile.location?.address?.formatted || "Location not set"}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500">
+              {" "}
+              {/* Removed mt-1 */}
               {followerCount} Followers
             </p>
           </div>
         </div>
         {/* Rating */}
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 self-start pt-1">
+          {" "}
+          {/* Aligned rating to top, added padding */}
           <span className="text-yellow-400">★</span>
           <span className="text-gray-700 font-medium">
             {profile.ratingAverage?.toFixed(1) || "N/A"}
@@ -344,29 +331,32 @@ const FoodPartnerProfile = () => {
       <hr className="border-t border-gray-300 mb-6" />
 
       {/* Search Bar Area */}
-      {showSearchBar && (
-        <div className="mb-6 relative animate-fade-in">
-          <input
-            type="text"
-            placeholder={`Search in ${profile.name}'s menu...`}
-            className="w-full px-4 py-2 pl-10 rounded-lg bg-gray-100 border border-gray-300 placeholder-gray-500 text-sm outline-none focus:ring-2 focus:ring-brand-orange"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            autoFocus
-          />
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <button
-            onClick={() => {
-              setSearchTerm("");
-              setSearchResults([]);
-              setSearchError("");
-            }}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-red-500"
-          >
-            <FaTimes />
-          </button>
-        </div>
-      )}
+      {/* Search Bar Area - Always Visible */}
+      <div className="mb-6 relative">
+        {" "}
+        {/* Removed showSearchBar condition and animation */}
+        <input
+          type="text"
+          placeholder={`Search in ${profile.name}'s menu...`}
+          className="w-full px-4 py-2 pl-10 rounded-lg bg-gray-100 border border-gray-300 placeholder-gray-500 text-sm outline-none focus:ring-2 focus:ring-brand-orange"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          // Removed autoFocus, you might want it back depending on UX preference
+        />
+        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        {/* Keep the FaTimes button as is to clear search */}
+        <button
+          onClick={() => {
+            // No need to setShowSearchBar(false) anymore
+            setSearchTerm("");
+            setSearchResults([]);
+            setSearchError("");
+          }}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-red-500"
+        >
+          <FaTimes />
+        </button>
+      </div>
 
       {/* Search Results Display */}
       {(isSearching || searchResults.length > 0 || searchError) && (
@@ -397,6 +387,7 @@ const FoodPartnerProfile = () => {
           {videos.map((item) => (
             <div
               key={item._id.toString()}
+              onClick={() => handleVideoClick(item._id)}
               onMouseEnter={() => handleMouseEnter(item._id)}
               onMouseLeave={() => handleMouseLeave(item._id)}
               className="aspect-w-9 aspect-h-16 cursor-pointer group relative overflow-hidden rounded"
@@ -408,8 +399,7 @@ const FoodPartnerProfile = () => {
                 playsInline
                 loop
                 preload="metadata"
-                onClick={() => handleVideoClick(item._id)}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 pointer-events-none"
               />
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
             </div>
@@ -422,20 +412,27 @@ const FoodPartnerProfile = () => {
         </div>
       )}
 
-      <CartButton positionClass="fixed bottom-24 right-4" />
+      <CartButton positionClass="absolute bottom-24 right-4" />
 
-      {/* Glassmorphism Menu Button */}
+      {/* Glassmorphism Menu Button - Toggles Summary */}
       <div
         ref={menuButtonRef}
         className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-20"
       >
         <button
-          className="px-12 py-3 rounded-full bg-white/60 backdrop-blur-md text-gray-800 font-medium border border-white/30 shadow-lg transition hover:bg-white/80 flex items-center gap-2"
-          onMouseEnter={handleMenuMouseEnter}
-          onMouseLeave={handleMenuMouseLeave}
-          onClick={handleMenuClick}
+          className="px-12 py-3 rounded-full bg-white/30 backdrop-blur-xl text-gray-800 font-medium border border-white/40 shadow-xl transition hover:bg-white/80 flex items-center gap-2" // <-- Enhanced frosted glass effect
+          onClick={() => {
+            // Directly toggle the showMenuSummary state
+            setShowMenuSummary((prevShowSummary) => {
+              const nextShowSummary = !prevShowSummary;
+              // Fetch summary only if we are *opening* it and it's not already loaded/loading
+              if (nextShowSummary && !menuSummary && !loadingSummary) {
+                fetchMenuSummary();
+              }
+              return nextShowSummary; // Return the new state value
+            });
+          }}
         >
-          <FaSearch size={14} />
           Menu
         </button>
       </div>
@@ -443,21 +440,24 @@ const FoodPartnerProfile = () => {
       {/* Menu Summary Popover */}
       {showMenuSummary && menuButtonRef.current && (
         <div
-          className="fixed bg-white rounded-lg shadow-xl border border-gray-200 p-4 w-64 text-sm text-gray-700 z-30 transition-opacity duration-200 animate-fade-in"
+          className="fixed bg-white/49 backdrop-blur-lg rounded-lg shadow-xl border border-white/50 p-4 w-64 text-sm text-gray-800 z-30 transition-opacity duration-200 animate-fade-in"
           style={{
-            bottom: `${menuButtonRef.current.offsetHeight + 10}px`,
+            bottom: `${menuButtonRef.current.offsetHeight + 89}px`, // Position above button
             left: "50%",
             transform: "translateX(-50%)",
           }}
-          onMouseEnter={handleSummaryMouseEnter}
-          onMouseLeave={handleSummaryMouseLeave}
+          // Removed hover handlers
         >
+          {/* Loading state */}
           {loadingSummary && <p>Loading menu details...</p>}
-          {menuSummary && (
+
+          {/* Summary content */}
+          {!loadingSummary && menuSummary && (
             <div className="space-y-2">
               <h4 className="font-semibold border-b pb-1 mb-2 text-brand-gray">
                 Menu Overview ({menuSummary.totalItems || 0} items)
               </h4>
+              {/* Categories */}
               {menuSummary.categories?.length > 0 && (
                 <div>
                   <p className="font-medium text-xs text-gray-500 uppercase">
@@ -473,6 +473,7 @@ const FoodPartnerProfile = () => {
                   </ul>
                 </div>
               )}
+              {/* Cuisines */}
               {menuSummary.cuisines?.length > 0 && (
                 <div>
                   <p className="font-medium text-xs text-gray-500 uppercase">
@@ -490,6 +491,8 @@ const FoodPartnerProfile = () => {
               )}
             </div>
           )}
+
+          {/* Error/No summary state */}
           {!loadingSummary && !menuSummary && <p>Could not load summary.</p>}
         </div>
       )}

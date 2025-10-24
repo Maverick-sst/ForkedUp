@@ -310,7 +310,7 @@ function EditUserProfile({ onClose }) {
       </div>
 
       {/* Scrollable Content Area */}
-      <div className="flex-grow overflow-y-auto p-6 bg-brand-offwhite">
+      <div className="flex-grow overflow-y-auto p-6 bg-brand-offwhite pb-24 scrollbar-hide">
         {/* Profile Picture Section */}
         <div className="flex flex-col items-center mb-8">
           <div className="relative">
@@ -322,7 +322,7 @@ function EditUserProfile({ onClose }) {
                 }&background=random&color=fff&size=96`
               }
               alt="Profile"
-              className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg bg-gray-300"
+              className="w-33 h-33 rounded-full object-cover border-4 border-white shadow-lg bg-gray-300"
             />
             <button
               onClick={handleImageUploadClick}
@@ -377,7 +377,7 @@ function EditUserProfile({ onClose }) {
       </div>
 
       {/* Sticky Footer with Save Button */}
-      <div className="fixed inset-x-0 bottom-0 w-full bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] border-t p-4 z-10 flex-shrink-0">
+      <div className="absolute inset-x-0 bottom-0 w-full bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] border-t p-4 z-10 flex-shrink-0">
         <button
           onClick={handleSave}
           disabled={isSaving}

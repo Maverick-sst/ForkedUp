@@ -321,6 +321,7 @@ function UserProfileReelsViewer() {
       name: item.name,
       price: item.price,
       foodPartner: item.foodPartner,
+      videoUrl: item.video
     };
     addItemToCart(itemToAdd);
     console.log(`${item.name} added to Cart`);
@@ -355,7 +356,7 @@ function UserProfileReelsViewer() {
   return (
     <div
       onClick={handleClick}
-      className="fixed inset-0 h-dvh w-screen overflow-hidden bg-black select-none"
+      className="absolute inset-0 bg-black overflow-hidden flex flex-col select-none"
     >
       {/* Back Button */}
       <button
@@ -363,7 +364,7 @@ function UserProfileReelsViewer() {
           e.stopPropagation();
           navigate(-1);
         }}
-        className="fixed top-8 left-4 z-30 text-white hover:text-gray-300 transition-colors"
+        className="absolute top-8 left-4 z-30 text-white hover:text-gray-300 transition-colors"
         aria-label="Go back"
       >
         <ArrowLeft size={30} />
@@ -385,19 +386,17 @@ function UserProfileReelsViewer() {
               aria-label={`Reel for ${item.name || "food item"}`}
             >
               {/* {Pause & Play} */}
-              {isIconDisplayed && isActiveVideoId === item._id && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-500 ease-in-out z-10 animate-fade-in-out">
-                  {/* Added animation class */}
-                  <div className="bg-black/50 p-4 rounded-full">
-                    {/* Added background */}
-                    {isVideoPaused ? (
-                      <Play size={49} fill="white" className="text-white/90" />
-                    ) : (
-                      <Pause size={49} fill="white" className="text-white/90" />
-                    )}
-                  </div>
-                </div>
-              )}
+                            {isIconDisplayed && isActiveVideoId === item._id && (
+                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-500 ease-in-out z-10 animate-fade-in-out ml-10">
+                                <div className="bg-black/50 p-4 rounded-full">
+                                  {isVideoPaused ? (
+                                    <Play size={49} fill="white" className="text-white/90" />
+                                  ) : (
+                                    <Pause size={49} fill="white" className="text-white/90" />
+                                  )}
+                                </div>
+                              </div>
+                            )}
 
               <video
                 ref={(node) => setVideoRef(node, item._id)}
@@ -511,18 +510,18 @@ function UserProfileReelsViewer() {
                         ).charAt(0)}&background=random&color=fff&size=32`
                       }
                       alt={partnerInfoMap[item.foodPartner]?.name || "Partner"}
-                      className="w-8 h-8 rounded-full object-cover border border-white/30 flex-shrink-0"
+                      className="w-11 h-11 rounded-full object-cover border border-white/30 flex-shrink-0"
                     />
-                    <span className="font-semibold text-sm group-hover:underline">
+                    <span className="font-semibold text-xl group-hover:underline">
                       {partnerInfoMap[item.foodPartner]?.name || "Loading..."}
                     </span>
                   </Link>
                   {/* Description */}
-                  <p className="text-xs line-clamp-2">
+                  <p className="text-l line-clamp-2">
                     {item.description || " "}
                   </p>
                   {/* Name & Price */}
-                  <p className="text-sm font-semibold flex justify-between items-center mt-1">
+                  <p className="text-lg font-semibold flex justify-between items-center mt-1">
                     <span>{item.name}</span>
                     <span className="text-brand-orange font-bold text-base">
                       ₹{item.price?.toFixed(2)}

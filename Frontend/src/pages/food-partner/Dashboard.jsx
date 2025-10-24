@@ -1,23 +1,28 @@
 import { useState, useCallback, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FaTimesCircle, FaCheckCircle } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  FaTimesCircle,
+  FaCheckCircle,
+  FaUtensils,
+  FaCog,
+  FaChartBar,
+  FaShippingFast,
+  
+} from "react-icons/fa";
 import ProgressRing from "../../components/ProgressRing";
 import axios from "axios";
 
-//  ONBOARDING VIEW: Shown to new partners who need to complete their profile.
+// --- Onboarding View (Remains the same) ---
 const OnboardingView = () => {
   const profileCompletion = 25;
-
   return (
     <div className="w-full max-w-sm bg-brand-offwhite rounded-2xl shadow-lg p-8 flex flex-col items-center text-center animate-fade-in">
       <p className="text-brand-gray mb-6">
         Complete your profile to start selling
       </p>
-
       <ProgressRing percentage={profileCompletion} />
-
       <Link
-        to="/food-partner/profile/edit" // This route will lead to the profile setup form
+        to="/food-partner/profile/edit"
         className="mt-8 w-full py-3 px-6 bg-brand-orange text-white font-heading rounded-lg shadow-md hover:bg-brand-peach hover:text-brand-gray transition-colors duration-300"
       >
         Setup Profile
@@ -26,62 +31,75 @@ const OnboardingView = () => {
   );
 };
 
-// OPERATIONAL DASHBOARD: The main control center for an active partner.
-
+// --- OPERATIONAL DASHBOARD ---
 const OperationalDashboard = () => {
-  const [pendingOrders, setPendingOrders] = useState([]); // State for new orders
-  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  // ... (State declarations, fetch functions, useEffect hooks, handleUpdateStatus, renderActiveOrderActions remain the same as previous correct version) ...
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [activeOrders, setActiveOrders] = useState([]);
+  const [isLoadingPending, setIsLoadingPending] = useState(false);
+  const [isLoadingActive, setIsLoadingActive] = useState(false);
   const [errorOrders, setErrorOrders] = useState(null);
+  const navigate = useNavigate();
 
   const fetchPendingOrders = useCallback(async () => {
-    // Avoid fetching if already loading, unless explicitly told to refresh
-    // if (isLoadingOrders) return;
-
-    setIsLoadingOrders(true);
-    setErrorOrders(null);
-    console.log("Polling for pending orders..."); // Log polling activity
-
+    setIsLoadingPending(true);
+    console.log("Polling for pending orders...");
     try {
       const response = await axios.get(
-        "http://localhost:8000/api/orders/partner?status=pending", // Fetch only pending orders
+        "http://localhost:8000/api/orders/partner?status=pending",
         { withCredentials: true }
       );
       setPendingOrders(response.data.orders || []);
     } catch (err) {
       console.error("Failed to fetch pending orders:", err);
-      setErrorOrders("Could not load new orders. Please try again later.");
-      // Keep existing orders in view on error? Or clear them? Depends on UX preference.
-      // setPendingOrders([]);
+      setErrorOrders(
+        `Could not load new orders. ${err.response?.data?.message || ""}`
+      );
     } finally {
-      setIsLoadingOrders(false);
+      setIsLoadingPending(false);
     }
-  }, []); // useCallback ensures this function's identity is stable
+  }, []);
 
-  // --- Polling Logic ---
+  const fetchActiveOrders = useCallback(async () => {
+    setIsLoadingActive(true);
+    console.log("Fetching active orders...");
+    const activeStatuses = "accepted,preparing,out_for_delivery";
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/api/orders/partner?status=${activeStatuses}`,
+        { withCredentials: true }
+      );
+      setActiveOrders(response.data.orders || []);
+    } catch (err) {
+      console.error("Failed to fetch active orders:", err);
+      setErrorOrders(
+        `Could not load active orders. ${err.response?.data?.message || ""}`
+      );
+    } finally {
+      setIsLoadingActive(false);
+    }
+  }, []);
+
   useEffect(() => {
-    // Fetch immediately on component mount
     fetchPendingOrders();
-    const intervalId = setInterval(fetchPendingOrders, 20000); // 20000 ms = 20 seconds
-
-    return () => clearInterval(intervalId);
-  }, [fetchPendingOrders]);
+    fetchActiveOrders();
+    const pendingIntervalId = setInterval(fetchPendingOrders, 20000);
+    return () => {
+      clearInterval(pendingIntervalId);
+    };
+  }, [fetchPendingOrders, fetchActiveOrders]);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
-    // Prevent multiple clicks while processing
-    // A more robust solution might disable buttons specifically for that order
-    // For now, a simple check might suffice if state updates quickly
-
+    setErrorOrders(null);
     try {
       await axios.patch(
         `http://localhost:8000/api/orders/partner/${orderId}/status`,
-        { status: newStatus }, // Send the new status in the body
+        { status: newStatus },
         { withCredentials: true }
       );
-
-      setPendingOrders((prevOrders) =>
-        prevOrders.filter((order) => order._id !== orderId)
-      );
       console.log(`Order ${orderId} status updated to ${newStatus}`);
+      fetchPendingOrders();
+      fetchActiveOrders();
     } catch (err) {
       console.error(
         `Failed to update order ${orderId} to status ${newStatus}:`,
@@ -93,14 +111,47 @@ const OperationalDashboard = () => {
     }
   };
 
+  const renderActiveOrderActions = (order) => {
+    switch (order.orderStatus) {
+      case "accepted":
+        return (
+          <button
+            onClick={() => handleUpdateStatus(order._id, "preparing")}
+            className="px-4 py-1.5 text-sm font-semibold text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1"
+          >
+            <FaUtensils /> Start Preparing
+          </button>
+        );
+      case "preparing":
+        return (
+          <button
+            onClick={() => handleUpdateStatus(order._id, "out_for_delivery")}
+            className="px-4 py-1.5 text-sm font-semibold text-white bg-purple-500 rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-1"
+          >
+            <FaShippingFast /> Out for Delivery
+          </button>
+        );
+      case "out_for_delivery":
+        return (
+          <span className="text-sm font-medium text-purple-600">
+            Currently Delivering...
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+
   return (
     <div className="w-full max-w-md flex flex-col gap-6 animate-fade-in">
+      {/* --- RESTAURANT STATUS --- */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
+        {/* Restaurant Status toggle */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-heading text-xl text-brand-gray">
             Restaurant Status
           </h2>
-
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -115,32 +166,38 @@ const OperationalDashboard = () => {
           </label>
         </div>
 
-        <div className="border-t border-brand-gray-light pt-4">
+        {/* General Error Display */}
+        {errorOrders && (
+          <p className="text-center text-red-600 py-2 mb-2 border border-red-200 bg-red-50 rounded">
+            {errorOrders}
+          </p>
+        )}
+
+        {/* --- NEW ORDERS SECTION --- */}
+        {/* Ensures this section has max-height and scrolling */}
+        <div className="border-t border-brand-gray-light pt-4 mb-6">
           <h3 className="font-heading text-lg text-brand-gray mb-2">
             New Orders ({pendingOrders.length})
           </h3>
-          {isLoadingOrders && (
+          {isLoadingPending && (
             <p className="text-center text-gray-500 py-4">
               Checking for new orders...
             </p>
           )}
-          {errorOrders && (
-            <p className="text-center text-red-600 py-4">{errorOrders}</p>
-          )}
-
-          {!isLoadingOrders && pendingOrders.length === 0 && !errorOrders && (
+          {!isLoadingPending && pendingOrders.length === 0 && (
             <div className="text-center text-gray-400 py-4">
               <p>No new orders right now. ✨</p>
             </div>
           )}
-
-          <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-            {" "}
+          {/* Scrollable container for pending orders */}
+          <div className="space-y-4 max-h-60 overflow-y-auto pr-2 scrollbar-hide">
             {pendingOrders.map((order) => (
               <div
                 key={order._id}
                 className="border border-brand-gray-light rounded-lg p-4 bg-gray-50 shadow-sm"
               >
+                {/* ... Order details ... */}
+                 {/* Order Header */}
                 <div className="flex justify-between items-center mb-2 pb-2 border-b">
                   <div>
                     <p className="text-sm font-semibold text-brand-gray">
@@ -148,7 +205,7 @@ const OperationalDashboard = () => {
                     </p>
                     <p className="text-xs text-gray-500">
                       Order ID: ...{order._id.slice(-6)}
-                    </p>{" "}
+                    </p>
                   </div>
                   <p className="text-xs text-gray-500">
                     {new Date(order.createdAt).toLocaleTimeString([], {
@@ -157,20 +214,19 @@ const OperationalDashboard = () => {
                     })}
                   </p>
                 </div>
-
                 {/* Order Items */}
                 <ul className="list-disc list-inside space-y-1 text-sm text-brand-gray mb-3">
                   {order.items.map((item, index) => (
                     <li key={index}>
-                      {item.quantity} x {item.food?.name || "Unknown Item"}{" "}
+                      {item.quantity} x {item.food?.name || "Unknown Item"}
                       <span className="text-gray-500">
+                        {" "}
                         (₹{(item.price * item.quantity).toFixed(2)})
                       </span>
                     </li>
                   ))}
                 </ul>
-
-                {/* Order Total & Payment */}
+                {/* Total & Payment */}
                 <div className="text-sm mb-3">
                   <p>
                     <span className="font-semibold">Total:</span> ₹
@@ -182,13 +238,12 @@ const OperationalDashboard = () => {
                     )
                   </p>
                 </div>
-                {/* Delivery Address */}
+                {/* Address */}
                 <p className="text-xs text-gray-600 mb-3 bg-gray-100 p-2 rounded">
                   <span className="font-semibold">Deliver To:</span>{" "}
                   {order.deliveryAddress?.address?.formatted ||
                     "Address details missing"}
                 </p>
-
                 {/* Action Buttons */}
                 <div className="flex justify-end gap-3">
                   <button
@@ -210,27 +265,133 @@ const OperationalDashboard = () => {
             ))}
           </div>
         </div>
+
+        {/* --- ACTIVE ORDERS SECTION --- */}
+        <div className="border-t border-brand-gray-light pt-4">
+          <h3 className="font-heading text-lg text-brand-gray mb-2">
+            Active Orders ({activeOrders.length})
+          </h3>
+          {isLoadingActive && (
+            <p className="text-center text-gray-500 py-4">
+              Loading active orders...
+            </p>
+          )}
+          {!isLoadingActive && activeOrders.length === 0 && (
+            <div className="text-center text-gray-400 py-4">
+              <p>No orders currently in progress.</p>
+            </div>
+          )}
+          {/* Scrollable container for active orders */}
+          <div className="space-y-4 max-h-96 overflow-y-auto pr-2 scrollbar-hide">
+            {activeOrders.map((order) => (
+              <div
+                key={order._id}
+                className="border border-brand-gray-light rounded-lg p-4 bg-blue-50 shadow-sm"
+              >
+                {/* ... Order details ... */}
+                {/* Order Header (Similar to pending) */}
+                <div className="flex justify-between items-center mb-2 pb-2 border-b">
+                  <div>
+                    <p className="text-sm font-semibold text-brand-gray">
+                      {order.user?.name || "Customer"} (ID: ...
+                      {order._id.slice(-6)})
+                    </p>
+                    {/* Display current status clearly */}
+                    <p className="text-xs font-medium uppercase tracking-wide text-blue-600">
+                      {order.orderStatus.replace("_", " ")}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {new Date(order.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+                {/* Order Items */}
+                <ul className="list-disc list-inside space-y-1 text-sm text-brand-gray mb-3">
+                  {order.items.map((item, index) => (
+                    <li key={index}>
+                      {item.quantity} x {item.food?.name || "Unknown Item"}
+                    </li>
+                  ))}
+                </ul>
+                {/* Address */}
+                <p className="text-xs text-gray-600 mb-3 bg-blue-100 p-2 rounded">
+                  <span className="font-semibold">Deliver To:</span>{" "}
+                  {order.deliveryAddress?.address?.formatted ||
+                    "Address details missing"}
+                </p>
+
+                {/* Action Buttons for Next Step */}
+                <div className="flex justify-end gap-3 mt-3">
+                  {renderActiveOrderActions(order)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* --- AT-A-GLANCE (Snapshot) --- */}
-      {/* (This section remains the same) */}
-      <div className="bg-white rounded-2xl shadow-lg p-6"> /* ... */ </div>
+      {/* --- Today's Snapshot --- */}
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <h2 className="font-heading text-xl text-brand-gray mb-4">
+          Today's Snapshot 📊
+        </h2>
+        <div className="grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p className="text-3xl font-bold text-brand-green">
+              {activeOrders.length}
+            </p>
+            <p className="text-sm text-brand-gray">Active Orders</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-brand-orange">₹ --</p>
+            <p className="text-sm text-brand-gray">Today's Revenue</p>
+          </div>
+        </div>
+      </div>
 
       {/* --- QUICK ACCESS --- */}
-      {/* (This section remains the same) */}
-      <div className="grid grid-cols-3 gap-4 text-center"> /* ... */ </div>
+      <div className="grid grid-cols-3 gap-4 text-center">
+        <Link
+          to="/add-food"
+          className="bg-white rounded-xl shadow p-4 flex flex-col items-center justify-center hover:shadow-md transition-shadow"
+        >
+          <FaUtensils size={24} className="text-brand-orange mb-2" />
+          <span className="text-xs font-medium text-brand-gray">
+            Manage Menu
+          </span>
+        </Link>
+        <Link
+          to="/food-partner/profile/edit"
+          className="bg-white rounded-xl shadow p-4 flex flex-col items-center justify-center hover:shadow-md transition-shadow"
+        >
+          <FaCog size={24} className="text-brand-gray mb-2" />
+          <span className="text-xs font-medium text-brand-gray">
+            Edit Profile
+          </span>
+        </Link>
+        <button
+          className="bg-white rounded-xl shadow p-4 flex flex-col items-center justify-center hover:shadow-md transition-shadow disabled:opacity-50"
+          disabled
+        >
+          <FaChartBar size={24} className="text-gray-400 mb-2" />
+          <span className="text-xs font-medium text-gray-400">Analytics</span>
+        </button>
+      </div>
     </div>
   );
 };
 
-// MAIN DASHBOARD COMPONENT: Decides which view to render.
-
+// --- MAIN DASHBOARD COMPONENT ---
 function Dashboard() {
-  const [isProfileComplete, setIsProfileComplete] = useState(null); // Start as null/loading
+  const [isProfileComplete, setIsProfileComplete] = useState(null);
   const [username, setUsername] = useState("Partner");
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
+
     const fetchProfile = async () => {
       setLoadingProfile(true);
       try {
@@ -240,7 +401,6 @@ function Dashboard() {
         if (response.data?.foodPartner) {
           const partner = response.data.foodPartner;
           setUsername(partner.userName || "Partner");
-
           const complete = !!(
             partner.name &&
             partner.email &&
@@ -249,17 +409,18 @@ function Dashboard() {
           );
           setIsProfileComplete(complete);
         } else {
-          setIsProfileComplete(false); // Assume incomplete if data is missing
+          setIsProfileComplete(false);
         }
       } catch (error) {
         console.error("Failed to fetch partner profile:", error);
-        setIsProfileComplete(false); // Assume incomplete on error
+        setIsProfileComplete(false);
       } finally {
         setLoadingProfile(false);
       }
     };
     fetchProfile();
   }, []);
+
 
   if (loadingProfile || isProfileComplete === null) {
     return (
@@ -268,14 +429,16 @@ function Dashboard() {
       </div>
     );
   }
-
   return (
-    <div className="flex flex-col items-center min-h-screen bg-brand-offwhite p-6 font-body">
-      <h1 className="text-3xl font-heading text-brand-gray mb-8">
+    <div className="flex flex-col min-h-screen bg-brand-offwhite p-6 font-body pb-30 overflow-y-auto scroll-hide"> 
+      <h1 className="text-3xl font-heading text-brand-gray mb-8 text-center"> 
         Hello, {username}!
       </h1>
-      {/* Render based on fetched profile completion status */}
-      {isProfileComplete ? <OperationalDashboard /> : <OnboardingView />}
+     
+      <div className="flex flex-col items-center w-full">
+         {/* Render based on fetched profile completion status */}
+        {isProfileComplete ? <OperationalDashboard /> : <OnboardingView />}
+      </div>
     </div>
   );
 }

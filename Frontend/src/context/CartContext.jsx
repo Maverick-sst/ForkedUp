@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 
 const CartContext = createContext();
 
@@ -26,34 +26,79 @@ export const CartProvider = ({ children }) => {
   }, [cartItems]);
 
   const addItemToCart = (item) => {
+    // Basic validation for the item being added
+    if (
+      !item ||
+      !item.foodId ||
+      typeof item.price !== "number" ||
+      !item.foodPartner
+    ) {
+      console.error("Attempted to add invalid item to cart:", item);
+      return; // Prevent adding invalid items
+    }
+
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find(
-        (cartItem) => cartItem.foodId === item.foodId
-      );
-      if (existingItem) {
-        // Increase quantity if item already exists
-        return prevItems.map((cartItem) =>
-          cartItem.foodId === item.foodId
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
+      // Check if the cart is not empty and the new item is from a different partner
+      if (
+        prevItems.length > 0 &&
+        prevItems[0].foodPartnerId !== item.foodPartner
+      ) {
+        //  Cart is not empty AND new item is from a different partner
+        console.log(
+          "Adding item from a different partner. Clearing existing cart."
         );
-      } else {
-        // Add new item with quantity 1
-        // Ensure we only add necessary fields
+
         return [
-          ...prevItems,
           {
-            foodId: item._id,
+            foodId: item.foodId,
             name: item.name,
             price: item.price,
             foodPartnerId: item.foodPartner,
+            videoUrl: item.videoUrl,
             quantity: 1,
           },
         ];
+      } else {
+        // Cart is empty OR new item is from the SAME partner
+
+        const existingItemIndex = prevItems.findIndex(
+          (cartItem) => cartItem.foodId === item.foodId
+        );
+
+        if (existingItemIndex > -1) {
+          // Item exists, increase quantity
+          const updatedItems = [...prevItems];
+          updatedItems[existingItemIndex] = {
+            ...updatedItems[existingItemIndex],
+            quantity: updatedItems[existingItemIndex].quantity + 1,
+          };
+          return updatedItems;
+        } else {
+          // Add new item to the existing cart (or start a new cart if empty)
+          return [
+            ...prevItems,
+            {
+              foodId: item.foodId,
+              name: item.name,
+              price: item.price,
+              foodPartnerId: item.foodPartner,
+              videoUrl: item.videoUrl,
+              quantity: 1,
+            },
+          ];
+        }
       }
     });
     console.log("Added to cart:", item);
   };
+
+  // Ensure totalAmount calculation handles potential issues gracefully
+  const totalAmount = cartItems.reduce((total, item) => {
+    // Make sure price and quantity are valid numbers before adding
+    const price = typeof item.price === "number" ? item.price : 0;
+    const quantity = typeof item.quantity === "number" ? item.quantity : 0;
+    return total + price * quantity;
+  }, 0);
 
   const updateItemQuantity = (foodId, newQuantity) => {
     setCartItems((prevItems) => {
@@ -77,11 +122,6 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
     localStorage.removeItem("cartItems");
   };
-
-  const totalAmount = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
 
   const value = {
     cartItems,

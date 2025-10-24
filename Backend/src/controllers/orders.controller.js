@@ -199,45 +199,49 @@ async function createOrder(req, res) {
 
 async function getPartnerOrders(req, res) {
   if (!req.foodPartner || req.role !== "foodpartner") {
-    return res
-      .status(401)
-      .json({ message: "Food partner authentication required." });
+    return res.status(401).json({ message: "Food partner authentication required." });
   }
   const foodPartnerId = req.foodPartner._id;
 
-  const statusFilter = req.query.status; // e.g., 'pending', 'accepted', 'preparing', 'out-for-delivery'
+  // Get status query param, could be single string or comma-separated
+  const statusFilterQuery = req.query.status;
 
   try {
     const query = { foodPartner: foodPartnerId };
-    if (statusFilter) {
-      // Validate statusFilter against the enum if needed
-      const validStatuses = Order.schema.path("orderStatus").enumValues;
-      if (validStatuses.includes(statusFilter)) {
-        query.orderStatus = statusFilter;
-      } else {
-        return res
-          .status(400)
-          .json({ message: `Invalid status filter: ${statusFilter}` });
+
+    let statuses = [];
+    if (statusFilterQuery) {
+      // Split the query string by commas and trim whitespace
+      statuses = statusFilterQuery.split(',').map(s => s.trim()).filter(Boolean); // Filter out empty strings
+
+      // Validate each status
+      const validStatusesEnum = Order.schema.path("orderStatus").enumValues;
+      const invalidStatuses = statuses.filter(s => !validStatusesEnum.includes(s));
+
+      if (invalidStatuses.length > 0) {
+        return res.status(400).json({ message: `Invalid status filter(s): ${invalidStatuses.join(', ')}` });
+      }
+
+      // If valid statuses provided, use $in operator
+      if (statuses.length > 0) {
+        query.orderStatus = { $in: statuses }; // Use $in for multiple statuses
       }
     }
+    // If no statusFilterQuery or after splitting it's empty, the query remains just { foodPartner: foodPartnerId } (fetches all)
 
     // Find orders, sort by newest first, populate user info (optional) and item info
     const orders = await Order.find(query)
-      .sort({ createdAt: -1 }) // Show newest orders first
-      .populate("user", "name userName email") // Get basic user details (adjust fields as needed)
-      .populate("items.food", "name"); // Get the name of the food item
+      .sort({ createdAt: -1 })
+      .populate("user", "name userName email")
+      .populate("items.food", "name");
 
     return res.status(200).json({
-      message: `Fetched orders successfully ${
-        statusFilter ? `with status: ${statusFilter}` : "(all statuses)"
-      }`,
+      message: `Fetched orders successfully ${statuses.length > 0 ? `with status(es): ${statuses.join(', ')}` : "(all statuses)"}`,
       orders: orders,
     });
   } catch (error) {
     console.error("Error fetching partner orders:", error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error while fetching orders." });
+    return res.status(500).json({ message: "Internal server error while fetching orders." });
   }
 }
 

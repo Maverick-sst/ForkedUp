@@ -1,5 +1,4 @@
-// Frontend/src/components/Reel.jsx
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { FaHeart, FaShareAlt, FaCommentDots, FaBookmark } from "react-icons/fa";
@@ -20,14 +19,12 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
   const { addItemToCart } = useCart();
   const [partnerInfoMap, setPartnerInfoMap] = useState({}); // { partnerId: { name, profilePhoto } }
 
-  // This is what allows the optimistic updates from Feed.jsx to work
   useEffect(() => {
     setVideos(listOfVideos);
   }, [listOfVideos]);
 
   // Observe videos after they are rendered
   useEffect(() => {
-    // ... (IntersectionObserver logic remains exactly the same) ...
     if (videos.length === 0) return;
     const observer = new IntersectionObserver(
       (entries) => {
@@ -55,9 +52,8 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
       });
       observer.disconnect();
     };
-  }, [videos]); // Still depends on internal videos state
+  }, [videos]);
 
-  //  Fetch partner details efficiently
   useEffect(() => {
     // Only proceed if there are videos
     if (!videos || videos.length === 0) return;
@@ -240,11 +236,19 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
   // handleBuyClick and closeCommentPanel
   const handleBuyClick = (e, item) => {
     e.stopPropagation();
-    addItemToCart(item);
+    if (!item) return;
+    const itemToAdd = {
+      foodId: item._id,
+      name: item.name,
+      price: item.price,
+      foodPartner: item.foodPartner,
+      videoUrl: item.video,
+    };
+    addItemToCart(itemToAdd);
     alert(`${item.name} added to Cart`);
   };
   const handleCommentClick = (e, videoId) => {
-    e.stopPropagation(); // Prevent triggering the main div's handleClick (play/pause)
+    e.stopPropagation();
     const videoElement = videoRefs.current.get(videoId);
     // If the video exists and is currently playing, pause it before opening comments
     if (videoElement && !videoElement.paused) {
@@ -262,25 +266,21 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
   };
 
   return (
-    <div onClick={handleClick} className="fixed h-screen overflow-hidden">
-      {/* Backspace icon - sticky positioned */}
-      <div className="fixed top-8 left-4 z-20">
-        <ArrowLeft
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(-1);
-          }}
-          size={30}
-          className="text-white cursor-pointer"
-        />
-      </div>
-      <div
-        style={{
-          height: "100vh",
-          overflowY: "scroll",
-          scrollSnapType: "y mandatory",
+    <div
+      onClick={handleClick}
+      className="absolute inset-0 bg-black overflow-hidden flex flex-col"
+    >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(-1);
         }}
+        className="absolute top-4 left-4 z-30 text-white p-2 bg-black/30 rounded-full hover:bg-black/50 transition-colors" // Adjusted styling & z-index
+        aria-label="Go back"
       >
+        <ArrowLeft size={24} />
+      </button>
+      <div className="flex-grow w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide relative">
         {videos.map((item, index) => {
           const partnerInfo = partnerInfoMap[item.foodPartner] || {
             name: "Loading...",
@@ -294,20 +294,13 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
           return (
             <section
               ref={index === videos.length - 1 ? lastVideoRef : null}
-              key={item._id} // Use item._id or index as fallback: key={item._id || index}
-              style={{
-                height: "100dvh",
-                width: "100%",
-                position: "relative",
-                scrollSnapAlign: "start",
-                backgroundColor: "black",
-              }}
-              className="flex items-center justify-center"
+              key={item._id}
+              className="h-full w-full relative snap-start flex items-center justify-center bg-black"
               aria-label={`Reel for ${item.name || "food item"}`}
             >
               {/* {Pause & Play} */}
               {isIconDisplayed && isActiveVideoId === item._id && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-500 ease-in-out z-10 animate-fade-in-out">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-500 ease-in-out z-10 animate-fade-in-out ml-10">
                   <div className="bg-black/50 p-4 rounded-full">
                     {isVideoPaused ? (
                       <Play size={49} fill="white" className="text-white/90" />
@@ -320,7 +313,6 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
 
               {/* Reel video */}
               <video
-                // Use the useCallback version of setVideoRef if implemented
                 ref={(el) => {
                   if (el) videoRefs.current.set(item._id, el);
                   else videoRefs.current.delete(item._id);
@@ -337,15 +329,14 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
                 onPlay={() => {
                   if (isActiveVideoId === item._id) setisVideoPaused(false);
                 }}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                className="block"
+                className="w-full h-full object-cover block"
               />
 
               {/* Gradient Overlay for Text Readability */}
               <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
 
               {/* Right-side action buttons */}
-              <div className="absolute right-4 bottom-70 flex flex-col gap-5 items-center text-white">
+              <div className="absolute right-4 bottom-50 flex flex-col gap-5 items-center text-white">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -440,22 +431,22 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
                         `https://ui-avatars.com/api/?name=${(
                           partnerInfo.name || "P"
                         ).charAt(0)}&background=random&color=fff&size=32`
-                      } // Use state + Placeholder
-                      alt={partnerInfo.name} // Use fetched name for alt text
-                      className="w-8 h-8 rounded-full object-cover border border-white/30 flex-shrink-0 bg-gray-500" // Added bg-gray-500 fallback
+                      }
+                      alt={partnerInfo.name}
+                      className="w-11 h-11 rounded-full object-cover border border-white/30 flex-shrink-0 bg-gray-500"
                     />
 
-                    <span className="font-semibold text-sm group-hover:underline">
+                    <span className="font-semibold text-xl group-hover:underline">
                       {partnerInfo.name}
                     </span>
                   </Link>
-                  <p className="text-xs line-clamp-2">
+                  <p className="text-l line-clamp-2">
                     {item.description || " "}
                   </p>
 
-                  <p className="text-sm font-semibold flex justify-between items-center mt-1">
+                  <p className="text-lg font-semibold flex justify-between items-center mt-1">
                     <span>{item.name}</span>
-                    <span className="text-brand-orange font-bold text-base">
+                    <span className="text-brand-orange text-lg font-bold text-base">
                       ₹{item.price?.toFixed(2)}
                     </span>
                   </p>
@@ -486,7 +477,7 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
       </div>
 
       {/* Sticky bottom navigation bar */}
-      <BottomNav />
+      {!openCommentPanelId && <BottomNav />}
 
       {/* Comment Panel remains the same */}
       {openCommentPanelId && (

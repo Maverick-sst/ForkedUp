@@ -171,6 +171,12 @@ function OrderSuccessPage() {
     },
     [orderId]
   );
+  
+  useEffect(() => {
+    console.log("OrderSuccessPage mounted. Fetching initial details...");
+    fetchOrderDetails(true); // Call fetch with isInitialLoad = true
+  }, [fetchOrderDetails]); 
+
   const isFinalStatus =
     order?.orderStatus === "delivered" ||
     order?.orderStatus === "rejected" ||

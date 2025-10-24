@@ -120,19 +120,19 @@ function CommentPanel({ foodId, onClose }) {
     }
   };
 
-  const panelHeightClass = "h-[60vh]";
+  const panelHeightClass = "h-[60%]";
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-40 flex items-end justify-center"
+      className="absolute inset-0 bg-black/50 z-40 flex items-end justify-center"
       onClick={onClose} // Close when clicking the overlay
     >
       {/* Comment Panel */}
       <div
-        className={`w-full max-w-lg bg-white rounded-t-2xl shadow-xl flex flex-col ${panelHeightClass} transition-all duration-300 ease-in-out transform translate-y-0`}
+        className={`w-full bg-white rounded-t-2xl shadow-xl flex flex-col ${panelHeightClass} transition-transform duration-300 ease-in-out transform translate-y-0`}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside panel
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b border-gray-200 sticky top-0 bg-white rounded-t-2xl">
+        <div className="flex items-center justify-between p-3 border-b border-gray-200 sticky top-0 bg-white rounded-t-2xl z-10">
           {/* Drag Handle Placeholder (non-functional for now) */}
           <div className="w-10 h-1.5 bg-gray-300 rounded-full mx-auto absolute top-1 left-1/2 -translate-x-1/2 cursor-grab"></div>
           <h2 className="text-center font-semibold text-gray-700 flex-grow pt-2">
@@ -147,7 +147,7 @@ function CommentPanel({ foodId, onClose }) {
         </div>
 
         {/* Comments List (Scrollable) */}
-        <div ref={listRef} className="flex-grow overflow-y-auto p-4 space-y-4">
+        <div ref={listRef} className="flex-grow overflow-y-auto p-4 space-y-4 scrollbar-hide">
           {comments.map((comment, index) => {
             // Attach ref to the last element for infinite scroll detection
             const isLastElement = comments.length === index + 1;
@@ -165,7 +165,7 @@ function CommentPanel({ foodId, onClose }) {
                 {/* Comment Content */}
                 <div className="flex-grow">
                   <p className="text-xs font-semibold text-gray-800 mb-0.5">
-                    {comment.user?.userName || "User"}{" "}
+                    {comment.user?.userName || "User"}
                     {/* Use populated user data */}
                     <span className="text-gray-400 font-normal ml-2">
                       {timeAgo(comment.createdAt)}
@@ -205,7 +205,7 @@ function CommentPanel({ foodId, onClose }) {
         {/* Comment Input Area */}
         <form
           onSubmit={handleAddComment}
-          className="p-3 border-t border-gray-200 bg-gray-50 sticky bottom-0"
+          className="p-3 border-t border-gray-200 bg-gray-50 sticky bottom-0" 
         >
           <div className="flex items-center gap-2">
             <input
@@ -254,7 +254,7 @@ function CommentPanel({ foodId, onClose }) {
           </div>
           {error && isSubmitting && (
             <p className="text-xs text-red-500 mt-1 pl-2">{error}</p>
-          )}{" "}
+          )}
           {/* Show submission error */}
         </form>
       </div>

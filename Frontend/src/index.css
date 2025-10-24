@@ -18,7 +18,30 @@
 /* Apply body font by default */
 body {
   font-family: var(--font-family-body);
+  background-color: #f0f0f0; /* Optional: Sets background outside the app container */
+  display: flex;             /* Use flexbox to center the #root div */
+  justify-content: center;   /* Center horizontally */
+  align-items: center;   /* Align #root to the top */
+  min-height: 100vh;         /* Ensure body takes full viewport height */
+  
 }
+
+/* Style the root container to simulate a mobile screen */
+#root {
+  width: 100%;             /* Start with full width */
+  max-width: 450px;       /* *** KEY: Set maximum width like a phone *** Adjust as needed */
+  height:95vh;
+  margin-left: auto;       /* Center the element horizontally (works with max-width) */
+  margin-right: auto;      /* Center the element horizontally (works with max-width) */
+  background-color: var(--color-brand-offwhite); /* Your app's background */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Optional: Add shadow for depth */
+  overflow: hidden;         /* Hide horizontal overflow */
+  position: relative;       /* Establish positioning context */
+  display: flex;            /* Use flexbox for internal layout */
+  flex-direction: column;   /* Stack children vertically */
+  border-radius: 8px;
+}
+
 
 /* Utility class for text shadow (used in some components) */
 .text-shadow {

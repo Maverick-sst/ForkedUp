@@ -4,7 +4,7 @@ function BottomNav() {
   return (
     <>
       {/* Sticky bottom navigation bar */}
-      <div className="fixed inset-x-0 bottom-0 w-full px-8 py-2 flex justify-between items-center bg-black/30 backdrop-blur-md z-20">
+      <div className="absolute inset-x-0 bottom-0 max-w-[450px] mx-auto px-8 py-2 flex justify-between items-center bg-black/30 backdrop-blur-md z-20">
         <Link to={"/"} onClick={(e) => e.stopPropagation()}>
           <FaHome size={25} className="text-white" />
         </Link>

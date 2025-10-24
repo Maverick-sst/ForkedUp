@@ -106,11 +106,11 @@ function Profile() {
   }
 
   return (
-    <div className="relative flex flex-col h-screen bg-brand-offwhite">
+    <div className="relative flex flex-col h-full bg-brand-offwhite">
       {/* Back button */}
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-8 left-4 z-20 text-brand-gray p-1 rounded-full hover:bg-gray-100 transition-colors"
+        className="absolute top-8 left-4 z-20 text-brand-gray p-1 rounded-full hover:bg-gray-100 transition-colors"
       >
         <ArrowLeft size={28} />
       </button>
@@ -118,7 +118,7 @@ function Profile() {
       {/* Settings button */}
       <button
         onClick={() => setShowEditPanel(true)}
-        className="fixed top-8 right-4 z-20 text-brand-gray p-1 rounded-full hover:bg-gray-100 transition-colors"
+        className="absolute top-7 right-4 z-20 text-brand-gray p-1 rounded-full hover:bg-gray-100 transition-colors"
         aria-label="Edit Profile"
       >
         <Settings size={28} />
@@ -126,7 +126,7 @@ function Profile() {
 
       {/* Profile Header */}
       <div className="flex flex-col items-center pt-16 pb-6 px-6">
-        <div className="w-24 h-24 rounded-full bg-brand-gray-light border-2 border-brand-gray overflow-hidden shadow-md">
+        <div className="w-33 h-33 rounded-full bg-brand-gray-light border-2 border-brand-gray overflow-hidden shadow-md">
           <img
             src={
               userData.profilePhoto ||
@@ -182,7 +182,7 @@ function Profile() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 md:px-4 pb-20">
+      <div className="flex-1 overflow-y-auto px-2 md:px-4 pb-20 scrollbar-hide ">
         {activeBtn === "liked" && (
           <div className="grid grid-cols-3 gap-1 md:gap-2">
             {likedReels.map((item, index) => (
@@ -200,7 +200,7 @@ function Profile() {
                   playsInline
                   loop
                   preload="metadata"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 "
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
               </div>
@@ -249,7 +249,7 @@ function Profile() {
       </div>
 
       {!showEditPanel && <CartButton />}
-      {!showEditPanel && <BottomNav />}
+      <BottomNav />
     </div>
   );
 }
