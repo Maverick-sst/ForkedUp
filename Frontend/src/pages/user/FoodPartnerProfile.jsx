@@ -8,6 +8,7 @@ import SearchResultItem from "../../components/SearchResultItem";
 import _ from "lodash";
 import { FaUserCheck, FaUserPlus } from "react-icons/fa";
 import { useNotification } from "../../components/Notification";
+import LoadingComponent from "../../components/LoadingComponent"; // Adjust path if needed
 const FoodPartnerProfile = () => {
   const { id: partnerId } = useParams();
   const videoRefs = useRef(new Map());
@@ -243,7 +244,7 @@ const FoodPartnerProfile = () => {
   }
 
   if (loading) {
-    return <div className="text-center p-10">Loading partner details...</div>;
+    return <LoadingComponent message="Loading partner details..." />;
   }
   if (!profile) {
     return (

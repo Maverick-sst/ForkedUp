@@ -1,11 +1,12 @@
 import { useRef, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Settings } from "lucide-react";
 import axios from "axios";
 import CartButton from "../../components/CartButton";
 import BottomNav from "../../components/BottomNav";
 import EditUserProfile from "./EditUserProfile";
-
+import OrderSummary from "../../components/OrderSummary";
+import LoadingComponent from "../../components/LoadingComponent"; 
 function Profile() {
   const [activeBtn, setActiveBtn] = useState("liked");
   const [likedReels, setLikedReels] = useState([]);
@@ -35,6 +36,7 @@ function Profile() {
       })
       .catch((err) => {
         console.error("Failed to fetch user data:", err);
+        setUserData({ userName: "username", profilePhoto: null });
       })
       .finally(() => {
         setLoadingUser(false);
@@ -42,7 +44,17 @@ function Profile() {
   }, []);
 
   useEffect(() => {
+    if (activeBtn === "orders") {
+      setLikedReels([]);
+      setSavedReels([]);
+      return;
+    }
+
     let endpoint = "";
+
+    setLikedReels([]);
+    setSavedReels([]);
+
     if (activeBtn === "liked") {
       endpoint =
         "http://localhost:8000/api/food/user/likedreels?page=1&limit=15";
@@ -50,44 +62,38 @@ function Profile() {
       endpoint =
         "http://localhost:8000/api/food/user/savedreels?page=1&limit=15";
     } else {
-      setLikedReels([]);
-      setSavedReels([]);
       return;
     }
 
-    axios
-      .get(endpoint, { withCredentials: true })
-      .then((response) => {
-        const reelsData = response.data?.reels || [];
-        if (activeBtn === "liked") {
-          setLikedReels(reelsData);
-          setSavedReels([]);
-        } else if (activeBtn === "savedreels") {
-          setSavedReels(reelsData);
-          setLikedReels([]);
-        }
-      })
-      .catch((err) => {
-        console.error(`Error fetching ${activeBtn} reels:`, err);
-        setLikedReels([]);
-        setSavedReels([]);
-      });
-  }, [activeBtn]);
-
+    // Fetch Liked/Saved (existing logic)
+    if (endpoint) {
+      axios
+        .get(endpoint, { withCredentials: true })
+        .then((response) => {
+          const reelsData = response.data?.reels || [];
+          if (activeBtn === "liked") {
+            setLikedReels(reelsData);
+          } else if (activeBtn === "savedreels") {
+            setSavedReels(reelsData);
+          }
+        })
+        .catch((err) => {
+          console.error(`Error fetching ${activeBtn} reels:`, err);
+        });
+    }
+  }, [activeBtn]); // Re-run only when activeBtn changes
   const handleVideoClick = (item, index, type) => {
     const reelList = type === "liked" ? likedReels : savedReels;
-    navigate(`/profile/reels/${type}`, {
+    navigate(`/profile/reels/${type === "liked" ? "liked" : "saved"}`, {
       state: { reels: reelList, startIndex: index },
     });
   };
-
   const handleMouseEnter = (videoId) => {
     const video = videoRefs.current.get(videoId);
     if (video) {
       video.play().catch(() => {});
     }
   };
-
   const handleMouseLeave = (videoId) => {
     const video = videoRefs.current.get(videoId);
     if (video) {
@@ -95,27 +101,27 @@ function Profile() {
       video.currentTime = 0;
     }
   };
-
   const setVideoRef = (el, id) => {
     if (el) videoRefs.current.set(id, el);
     else videoRefs.current.delete(id);
   };
+  if (loadingUser) {
+    return <LoadingComponent message="Loading Profile..." />;
+  }
   if (showEditPanel) {
-    // If showEditPanel is true, render only the EditUserProfile component
     return <EditUserProfile onClose={() => setShowEditPanel(false)} />;
   }
 
   return (
     <div className="relative flex flex-col h-full bg-brand-offwhite">
-      {/* Back button */}
+      {/* Back & Settings Buttons (no changes) */}
       <button
         onClick={() => navigate(-1)}
         className="absolute top-8 left-4 z-20 text-brand-gray p-1 rounded-full hover:bg-gray-100 transition-colors"
+        aria-label="Go back"
       >
         <ArrowLeft size={28} />
       </button>
-
-      {/* Settings button */}
       <button
         onClick={() => setShowEditPanel(true)}
         className="absolute top-7 right-4 z-20 text-brand-gray p-1 rounded-full hover:bg-gray-100 transition-colors"
@@ -124,7 +130,7 @@ function Profile() {
         <Settings size={28} />
       </button>
 
-      {/* Profile Header */}
+      {/* Profile Header (no changes) */}
       <div className="flex flex-col items-center pt-16 pb-6 px-6">
         <div className="w-33 h-33 rounded-full bg-brand-gray-light border-2 border-brand-gray overflow-hidden shadow-md">
           <img
@@ -143,11 +149,10 @@ function Profile() {
             }}
           />
         </div>
-
         <h2 className="mt-4 font-heading text-2xl text-brand-gray">
-          {loadingUser ? "Loading..." : userData.userName}
+          {userData.userName}
         </h2>
-
+        {/* Filter Buttons (no changes) */}
         <div className="flex flex-wrap justify-center gap-3 mt-4">
           <button
             onClick={() => setActiveBtn("liked")}
@@ -182,9 +187,16 @@ function Profile() {
         </div>
       </div>
 
+      {/* Content Area - Scrollable */}
       <div className="flex-1 overflow-y-auto px-2 md:px-4 pb-20 scrollbar-hide ">
+        {/* Liked Reels */}
         {activeBtn === "liked" && (
           <div className="grid grid-cols-3 gap-1 md:gap-2">
+            {likedReels.length === 0 && (
+              <p className="col-span-3 text-center text-gray-500 mt-8">
+                No liked reels yet.
+              </p>
+            )}
             {likedReels.map((item, index) => (
               <div
                 key={item._id}
@@ -205,15 +217,17 @@ function Profile() {
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
               </div>
             ))}
-            {likedReels.length === 0 && (
-              <p className="col-span-3 text-center text-gray-500 mt-8">
-                No liked reels yet.
-              </p>
-            )}
           </div>
         )}
+
+        {/* Saved Reels  */}
         {activeBtn === "savedreels" && (
           <div className="grid grid-cols-3 gap-1 md:gap-2">
+            {savedReels.length === 0 && (
+              <p className="col-span-3 text-center text-gray-500 mt-8">
+                No saved reels yet.
+              </p>
+            )}
             {savedReels.map((item, index) => (
               <div
                 key={item._id}
@@ -234,20 +248,14 @@ function Profile() {
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
               </div>
             ))}
-            {savedReels.length === 0 && (
-              <p className="col-span-3 text-center text-gray-500 mt-8">
-                No saved reels yet.
-              </p>
-            )}
           </div>
         )}
-        {activeBtn === "orders" && (
-          <div className="text-center text-gray-500 mt-8">
-            Order history coming soon!
-          </div>
-        )}
+
+        {/*  Orders Section - Render OrderSummary component */}
+        {activeBtn === "orders" && <OrderSummary />}
       </div>
 
+      {/* Cart Button & Bottom Nav (no changes) */}
       {!showEditPanel && <CartButton />}
       <BottomNav />
     </div>

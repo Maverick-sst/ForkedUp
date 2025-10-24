@@ -6,7 +6,7 @@ import { ArrowLeft, Play, Pause } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import CommentPanel from "./CommentPanel";
 import BottomNav from "./BottomNav";
-
+import { useNotification } from "./Notification";
 // Accept new props from Feed.jsx
 function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
   const [videos, setVideos] = useState(listOfVideos);
@@ -18,7 +18,7 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
   const [openCommentPanelId, setOpenCommentPanelId] = useState(null);
   const { addItemToCart } = useCart();
   const [partnerInfoMap, setPartnerInfoMap] = useState({}); // { partnerId: { name, profilePhoto } }
-
+  const {showNotification} = useNotification();
   useEffect(() => {
     setVideos(listOfVideos);
   }, [listOfVideos]);
@@ -245,7 +245,8 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
       videoUrl: item.video,
     };
     addItemToCart(itemToAdd);
-    alert(`${item.name} added to Cart`);
+    // alert(`${item.name} added to Cart`);
+    showNotification(`${item.name} added to Cart`)
   };
   const handleCommentClick = (e, videoId) => {
     e.stopPropagation();

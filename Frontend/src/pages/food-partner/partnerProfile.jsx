@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaPen, FaClock } from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
 import axios from "axios";
-
+import LoadingComponent from "../../components/LoadingComponent"; // Adjust path if needed
 import PersonalDetails from "../food-partner/partnerProfileComponents/PersonalDetails";
 import LocationDetails from "../food-partner/partnerProfileComponents/LocationDetails";
 import WorkingHours from "./partnerProfileComponents/WorkingHours";
@@ -12,7 +12,7 @@ import updateNestedState from "../../utilities/updateNestedState";
 import { getObjectDiff } from "../../utilities/dataDifference";
 import { useNotification } from "../../components/Notification";
 function PartnerProfile() {
-  const {showNotification} = useNotification();
+  const { showNotification } = useNotification();
   const navigate = useNavigate();
   const [openSection, setOpenSection] = useState("personal");
   const fileInputRef = useRef(null);
@@ -117,7 +117,7 @@ function PartnerProfile() {
     } catch (error) {
       console.error("Error uploading profile photo:", error);
       // alert("Failed to upload photo. Please try again.");
-      showNotification("Failed to upload photo. Please try again")
+      showNotification("Failed to upload photo. Please try again");
     }
   };
   const handleFetchLocation = async () => {
@@ -208,11 +208,7 @@ function PartnerProfile() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        Loading Profile...
-      </div>
-    );
+    return <LoadingComponent message="Loading Profile..." />;
   }
 
   if (!formData) {

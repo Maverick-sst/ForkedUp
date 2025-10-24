@@ -7,11 +7,10 @@ import {
   FaCog,
   FaChartBar,
   FaShippingFast,
-  
 } from "react-icons/fa";
 import ProgressRing from "../../components/ProgressRing";
 import axios from "axios";
-
+import LoadingComponent from "../../components/LoadingComponent"; // Adjust path if needed
 // --- Onboarding View (Remains the same) ---
 const OnboardingView = () => {
   const profileCompletion = 25;
@@ -142,7 +141,6 @@ const OperationalDashboard = () => {
     }
   };
 
-
   return (
     <div className="w-full max-w-md flex flex-col gap-6 animate-fade-in">
       {/* --- RESTAURANT STATUS --- */}
@@ -197,7 +195,7 @@ const OperationalDashboard = () => {
                 className="border border-brand-gray-light rounded-lg p-4 bg-gray-50 shadow-sm"
               >
                 {/* ... Order details ... */}
-                 {/* Order Header */}
+                {/* Order Header */}
                 <div className="flex justify-between items-center mb-2 pb-2 border-b">
                   <div>
                     <p className="text-sm font-semibold text-brand-gray">
@@ -391,7 +389,6 @@ function Dashboard() {
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
-
     const fetchProfile = async () => {
       setLoadingProfile(true);
       try {
@@ -421,22 +418,17 @@ function Dashboard() {
     fetchProfile();
   }, []);
 
-
   if (loadingProfile || isProfileComplete === null) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        Loading Dashboard...
-      </div>
-    );
+    return <LoadingComponent message="Loading Dashboard..." />;
   }
   return (
-    <div className="flex flex-col min-h-screen bg-brand-offwhite p-6 font-body pb-30 overflow-y-auto scroll-hide"> 
-      <h1 className="text-3xl font-heading text-brand-gray mb-8 text-center"> 
+    <div className="flex flex-col min-h-screen bg-brand-offwhite p-6 font-body pb-30 overflow-y-auto scroll-hide">
+      <h1 className="text-3xl font-heading text-brand-gray mb-8 text-center">
         Hello, {username}!
       </h1>
-     
+
       <div className="flex flex-col items-center w-full">
-         {/* Render based on fetched profile completion status */}
+        {/* Render based on fetched profile completion status */}
         {isProfileComplete ? <OperationalDashboard /> : <OnboardingView />}
       </div>
     </div>

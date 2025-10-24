@@ -2,7 +2,7 @@ import axios from "axios";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Reel from "../../components/Reel";
-
+import LoadingComponent from "../../components/LoadingComponent";
 function FoodPartnerReels() {
   const { id: foodPartnerId, foodId: initialFoodId } = useParams();
   const navigate = useNavigate();
@@ -146,15 +146,7 @@ function FoodPartnerReels() {
     savedByUser: savedSet.has(video._id),
   }));
 
-  if (loading && page === 1) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-brand-offwhite">
-        <h1 className="font-heading text-2xl text-brand-gray font-heading text-brand-gray">
-          Loading reels...
-        </h1>
-      </div>
-    );
-  }
+  <LoadingComponent message="Loading Feed..." />;
 
   if (error) {
     return (

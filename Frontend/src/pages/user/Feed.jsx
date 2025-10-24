@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import Reel from "../../components/Reel";
-
+import LoadingComponent from "../../components/LoadingComponent";
 function Feed() {
   const [videos, setVideos] = useState([]);
   const [page, setPage] = useState(1);
@@ -141,15 +141,7 @@ function Feed() {
     savedByUser: savedSet.has(video._id),
   }));
 
-  if (loading && page === 1) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <h1 className="font-heading text-2xl text-brand-gray">
-          Loading Feed...
-        </h1>
-      </div>
-    );
-  }
+  <LoadingComponent message="Loading Feed..." />;
 
   if (error) {
     return (

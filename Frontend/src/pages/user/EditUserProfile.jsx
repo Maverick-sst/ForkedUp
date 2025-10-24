@@ -9,7 +9,7 @@ import { useGeoLocation } from "../../hooks/useGeoLocation";
 import updateNestedState from "../../utilities/updateNestedState";
 import { getObjectDiff } from "../../utilities/dataDifference";
 import { useNotification } from "../../components/Notification";
-
+import LoadingComponent from "../../components/LoadingComponent"; 
 // This component receives an `onClose` function prop from Profile.jsx
 function EditUserProfile({ onClose }) {
   const [openSection, setOpenSection] = useState("personal");
@@ -280,11 +280,7 @@ function EditUserProfile({ onClose }) {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        Loading Profile...
-      </div>
-    );
+    return <LoadingComponent message="Loading Profile..." />;
   }
 
   if (!formData) {

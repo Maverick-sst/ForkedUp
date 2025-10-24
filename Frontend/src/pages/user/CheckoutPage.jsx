@@ -9,9 +9,11 @@ import {
   FaCreditCard,
   FaSave,
   FaCrosshairs,
+  FaSpinner,
 } from "react-icons/fa";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
-
+import { useNotification } from "../../components/Notification";
+import LoadingComponent from "../../components/LoadingComponent"; 
 export default function CheckoutPage() {
   const { cartItems, totalAmount, clearCart } = useCart();
   const navigate = useNavigate();
@@ -32,10 +34,11 @@ export default function CheckoutPage() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [orderJustPlaced, setOrderJustPlaced] = useState(false);
-
+  const [showUpiSimulationModal, setShowUpiSimulationModal] = useState(false);
+  const [isSimulatingPayment, setIsSimulatingPayment] = useState(false);
   const { location, status: geoStatus, requestLocation } = useGeoLocation();
   const [isFetchingGeoAddress, setIsFetchingGeoAddress] = useState(false);
-
+  const { showNotification } = useNotification();
   useEffect(() => {
     const fetchUserDetailsAndLocalStorage = async () => {
       setIsLoading(true);
@@ -199,22 +202,49 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
-    setIsPlacingOrder(true);
+    // Keep existing validation for address and cart items
+    setIsPlacingOrder(true); // Set loading early
     setErrorMessage("");
     const finalLocationObject = getFinalDeliveryLocationObject();
 
     if (!finalLocationObject) {
-      setIsPlacingOrder(false);
+      // Error message is set within getFinalDeliveryLocationObject
+      setIsPlacingOrder(false); // Reset loading state
       return;
     }
     if (cartItems.length === 0) {
       setErrorMessage("Your cart is empty.");
+      setIsPlacingOrder(false); // Reset loading state
+      return;
+    }
+
+    // *** START UPI SIMULATION CHECK ***
+    if (paymentMethod === "UPI") {
+      setShowUpiSimulationModal(true); // Show the modal
+      setIsPlacingOrder(false); // Don't keep main button loading while modal is shown
+      return; // Stop here, wait for modal interaction
+    }
+    // *** END UPI SIMULATION CHECK ***
+
+    // If not UPI, proceed directly with "pending" status
+    proceedWithOrderPlacement("pending");
+  };
+
+  // New function to handle the actual order placement
+  const proceedWithOrderPlacement = async (paymentStatus) => {
+    setIsPlacingOrder(true); // Ensure loading state is active
+    setErrorMessage("");
+    setShowUpiSimulationModal(false); // Close modal if it was open
+
+    // Re-get location object just in case, though it should be available
+    const finalLocationObject = getFinalDeliveryLocationObject();
+    if (!finalLocationObject) {
+      // This check might be redundant if handlePlaceOrder already validated, but good for safety
       setIsPlacingOrder(false);
       return;
     }
 
-    let addressToUseForOrder = finalLocationObject;
-
+    // Save address logic (keep your existing logic)
     if (isUsingManualAddress && saveNewAddress) {
       try {
         await axios.patch(
@@ -222,6 +252,7 @@ export default function CheckoutPage() {
           { label: newAddressLabel, location: finalLocationObject },
           { withCredentials: true }
         );
+        // You might want to refetch addresses here or update state if needed
       } catch (error) {
         console.error("Failed to save new address:", error);
         setErrorMessage(
@@ -230,22 +261,24 @@ export default function CheckoutPage() {
           }. Order not placed.`
         );
         setIsPlacingOrder(false);
-        return;
+        return; // Stop order placement if saving address failed
       }
     }
 
+    // Prepare order payload
     const orderPayload = {
       items: cartItems.map((item) => ({
         food: item.foodId,
         quantity: item.quantity,
-        price: item.price,
+        price: item.price, // Ensure price is validated before adding to cart
       })),
       totalAmount: totalAmount,
-      deliveryAddress: addressToUseForOrder,
-      paymentDetails: { method: paymentMethod, status: "pending" },
-      foodPartner: cartItems.length > 0 ? cartItems[0].foodPartnerId : null,
+      deliveryAddress: finalLocationObject, // Use the final validated/selected address object
+      paymentDetails: { method: paymentMethod, status: paymentStatus }, // Use the determined status
+      foodPartner: cartItems.length > 0 ? cartItems[0].foodPartnerId : null, // Ensure you have foodPartnerId in cart items
     };
 
+    // Check for essential payload parts
     if (!orderPayload.foodPartner) {
       setErrorMessage(
         "Cannot place order - missing restaurant information in cart."
@@ -253,47 +286,73 @@ export default function CheckoutPage() {
       setIsPlacingOrder(false);
       return;
     }
+    if (!orderPayload.deliveryAddress) {
+      setErrorMessage("Cannot place order - delivery address is missing.");
+      setIsPlacingOrder(false);
+      return;
+    }
 
-    // Place Order Logic
+    // Place Order API call (keep your existing logic)
     try {
+      console.log("Sending order payload:", orderPayload); // Log payload before sending
       const orderResponse = await axios.post(
         "http://localhost:8000/api/orders",
         orderPayload,
         { withCredentials: true }
       );
       console.log("Order placed successfully:", orderResponse.data);
-
       const newOrderId = orderResponse.data.order?._id;
 
       if (newOrderId) {
-        setOrderJustPlaced(true);
+        setOrderJustPlaced(true); // Set flag before navigating
+        // clearCart(); // Clear cart AFTER successful navigation setup
         navigate(`/order-success/${newOrderId}`);
+        // Clear cart needs to happen *after* navigation starts or in a useEffect triggered by navigation
+        // For simplicity, let's clear it just before navigation for now, but be aware of potential race conditions if navigation fails
         clearCart();
       } else {
         console.error("Order created but ID missing in response");
         setOrderJustPlaced(true);
-        clearCart(); // Clear cart even on fallback navigation
-        navigate("/");
+        clearCart(); // Still clear cart
+        navigate("/"); // Fallback navigation
       }
     } catch (error) {
-      console.error("Order placement failed:", error);
+      console.error(
+        "Order placement failed:",
+        error.response?.data || error.message || error
+      );
       setErrorMessage(
         error.response?.data?.message ||
           "Failed to place order. Please try again."
       );
-      // Do NOT clear cart on error, user might want to retry
+      // Do NOT clear cart on error
     } finally {
-      setIsPlacingOrder(false);
+      setIsPlacingOrder(false); // Reset loading state
+      setIsSimulatingPayment(false); // Ensure simulation spinner stops
     }
   };
-
+  // Handlers for the simulation modal buttons
+  const handleUpiSimulationResult = (success) => {
+    setShowUpiSimulationModal(false); // Hide modal first
+    if (success) {
+      showNotification("Simulated UPI Payment Successful!", "success");
+      // Set a brief visual indicator
+      setIsSimulatingPayment(true);
+      setTimeout(() => {
+        // proceedWithOrderPlacement takes the calculated paymentStatus
+        proceedWithOrderPlacement("completed"); // Call the actual placement function with 'completed' status
+        // setIsSimulatingPayment(false); // This will be reset in proceedWithOrderPlacement's finally block
+      }, 500); // Short delay for visual feedback
+    } else {
+      showNotification(
+        "Simulated UPI Payment Failed. Order not placed.",
+        "error"
+      );
+      setIsPlacingOrder(false); // Ensure the main button is re-enabled if needed
+    }
+  };
   if (isLoading) {
-    return (
-      // Keep loading state as is
-      <div className="flex justify-center items-center h-full">
-        Loading Checkout...
-      </div>
-    );
+    return <LoadingComponent message="Loading Checkout..." />;
   }
 
   return (
@@ -561,17 +620,59 @@ export default function CheckoutPage() {
         </div>
       </div>
 
+      {/* ... Other sections like Payment Method ... */}
+
+      {/* UPI Simulation Modal */}
+      {showUpiSimulationModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm text-center">
+            <h3 className="font-heading text-lg text-brand-gray mb-4">
+              Simulate UPI Payment
+            </h3>
+            {/* You could add a placeholder QR code image here if desired */}
+            {/* <img src="/path/to/dummy-qr.png" alt="Simulated QR Code" className="mx-auto mb-4 w-32 h-32"/> */}
+            <p className="text-sm text-brand-gray mb-6">
+              This is a test simulation. Choose the outcome:
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => handleUpiSimulationResult(true)}
+                className="px-6 py-2 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors"
+              >
+                Success
+              </button>
+              <button
+                onClick={() => handleUpiSimulationResult(false)}
+                className="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Failure
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Optional: Visual feedback during brief simulation delay */}
+      {isSimulatingPayment && (
+        <div className="fixed inset-0 bg-white/70 z-40 flex items-center justify-center">
+          <FaSpinner className="animate-spin text-brand-orange text-4xl" />
+          <p className="ml-3 text-brand-gray">Processing Payment...</p>
+        </div>
+      )}
+
+      {/* Checkout Footer (This part should already exist, update the button inside it) */}
       <div className="absolute bottom-0 left-0 w-full max-w-[450px] mx-auto bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] border-t p-3 z-10 flex-shrink-0">
         <button
-          onClick={handlePlaceOrder}
-          disabled={isPlacingOrder || isLoading}
+          onClick={handlePlaceOrder} // Keep this onClick
+          disabled={isPlacingOrder || isLoading || isSimulatingPayment} // Update disabled condition
           className={`w-full py-3 px-6 text-white font-heading rounded-lg shadow transition-opacity ${
-            isPlacingOrder || isLoading
+            isPlacingOrder || isLoading || isSimulatingPayment // Update class condition
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-brand-green hover:opacity-90"
           }`}
         >
-          {isPlacingOrder
+          {/* Update button text */}
+          {isPlacingOrder || isSimulatingPayment
             ? "Processing..."
             : `Place Order (₹${
                 typeof totalAmount === "number"
@@ -580,6 +681,6 @@ export default function CheckoutPage() {
               })`}
         </button>
       </div>
-    </div>
+    </div> // This should be the closing tag for the main component div
   );
 }

@@ -5,6 +5,7 @@ const {
   getPartnerOrders,
   updateOrderStatus,
   getOrderById,
+  getUserOrders
 } = require("../controllers/orders.controller"); // Create this
 
 const router = express.Router();
@@ -12,6 +13,8 @@ const router = express.Router();
 // POST /api/orders - Create a new order (User authenticated) ---- user
 router.post("/", authMiddleware, createOrder);
 
+// GET /api/orders/user - Get orders for the logged-in user
+router.get("/user", authMiddleware, getUserOrders);
 // --- Partner Routes ---
 
 // GET /api/orders/partner - Get orders for the logged-in partner (Partner role required)

@@ -357,9 +357,52 @@ async function getOrderById(req, res) {
       .json({ message: "Internal server error while fetching order details." });
   }
 }
+async function getUserOrders(req, res) {
+  // Ensure user is logged in and is a 'user'
+  if (!req.user || req.role !== "user") {
+    return res.status(401).json({ message: "User authentication required." });
+  }
+  const userId = req.user._id;
+
+  try {
+    // Find the user and populate the 'orders' array
+    // Sort orders by creation date, newest first within the population
+    const userWithOrders = await userModel.findById(userId).populate({
+      path: "orders",
+      options: { sort: { createdAt: -1 } }, // Sort orders newest first
+      populate: [ // Populate details within each order
+        {
+          path: "foodPartner",
+          select: "name profilePhoto", // Select partner fields you need
+        },
+        {
+          path: "items.food",
+          select: "name", // Select food item fields you need
+        },
+      ],
+    });
+
+    if (!userWithOrders) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Return just the orders array
+    return res.status(200).json({
+      message: "User orders fetched successfully.",
+      orders: userWithOrders.orders || [], // Send the populated orders array
+    });
+
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error while fetching user orders." });
+  }
+}
 module.exports = {
   createOrder,
   getPartnerOrders,
   updateOrderStatus,
   getOrderById,
+  getUserOrders
 };

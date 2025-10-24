@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import LoadingComponent from "../../components/LoadingComponent"; 
 import {
   FaClipboardCheck,
   FaRegClock,
@@ -171,11 +172,11 @@ function OrderSuccessPage() {
     },
     [orderId]
   );
-  
+
   useEffect(() => {
     console.log("OrderSuccessPage mounted. Fetching initial details...");
     fetchOrderDetails(true); // Call fetch with isInitialLoad = true
-  }, [fetchOrderDetails]); 
+  }, [fetchOrderDetails]);
 
   const isFinalStatus =
     order?.orderStatus === "delivered" ||
@@ -206,11 +207,7 @@ function OrderSuccessPage() {
   }, [isLoading, isFinalStatus, fetchOrderDetails]);
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        Loading Order Details...
-      </div>
-    );
+    return <LoadingComponent message="Loading Order Details..." />;
   }
 
   if (error) {
@@ -258,7 +255,7 @@ function OrderSuccessPage() {
     currentStatusDetails.step === -1 ? [currentStatusDetails] : orderSteps;
 
   return (
-    <div className="min-h-screen bg-brand-offwhite font-body">
+    <div className="flex flex-col h-screen bg-brand-offwhite font-body overflow-hidden">
       {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-10 p-4 flex items-center justify-center">
         <button
@@ -271,7 +268,8 @@ function OrderSuccessPage() {
         <h1 className="font-heading text-xl text-brand-gray">Order Tracking</h1>
       </div>
 
-      <div className="p-4 space-y-5">
+      {/* Scrollable Content Area */}
+      <div className="flex-grow overflow-y-auto scrollbar-hide p-4 space-y-5">
         {/* Initial Success Message */}
         {order.orderStatus === "pending" && ( // Show only initially
           <div className="bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-center shadow animate-fade-in mb-5">
