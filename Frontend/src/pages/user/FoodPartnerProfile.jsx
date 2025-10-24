@@ -7,6 +7,7 @@ import { FaSearch, FaTimes } from "react-icons/fa";
 import SearchResultItem from "../../components/SearchResultItem";
 import _ from "lodash";
 import { FaUserCheck, FaUserPlus } from "react-icons/fa";
+import { useNotification } from "../../components/Notification";
 const FoodPartnerProfile = () => {
   const { id: partnerId } = useParams();
   const videoRefs = useRef(new Map());
@@ -14,7 +15,7 @@ const FoodPartnerProfile = () => {
   const [profile, setProfile] = useState(null);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-
+  const { showNotification } = useNotification();
   //  Search & Menu State
   const [showMenuSummary, setShowMenuSummary] = useState(false);
   const [menuSummary, setMenuSummary] = useState(null);
@@ -174,7 +175,7 @@ const FoodPartnerProfile = () => {
       setFollowerCount((prevCount) =>
         currentlyFollowing ? prevCount + 1 : Math.max(0, prevCount - 1)
       );
-      alert(
+      showNotification(
         `Failed to ${
           currentlyFollowing ? "unfollow" : "follow"
         }. Please try again.`

@@ -1,102 +1,166 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useNotification } from "../../components/Notification";
+const logo =
+  "https://ik.imagekit.io/eczrgfwzq/forkedUp_logo2.png?updatedAt=1761337612355";
 
 const UserLogin = () => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
+
+  // Basic email validation regex
+  const isEmail = (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccessMsg("");
-    setErrorMsg("");
+    // --- Basic Validation ---
+    if (!userName.trim()) {
+      showNotification("Username or Email cannot be empty.", "error");
+      return;
+    }
+    if (!password) {
+      showNotification("Password cannot be empty.", "error");
+      return;
+    }
+
+    setIsLoading(true);
+
+    const loginData = isEmail(userName)
+      ? { email: userName, password }
+      : { userName, password };
 
     try {
       const response = await axios.post(
         "http://localhost:8000/api/auth/user/login",
-        {
-          userName,
-          password,
-        },
+        loginData,
         {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         }
       );
 
-      // Store JWT token if returned (e.g., response.data.token)
-      if (response.data && response.data.token) {
+      // Store JWT token if returned (optional, depends on backend setup)
+      if (response.data?.token) {
         localStorage.setItem("authToken", response.data.token);
-        // Set default Authorization header for future axios requests
         axios.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${response.data.token}`;
       }
 
-      setSuccessMsg("Login successful!");
+      showNotification("Login successful! Welcome back.", "success");
       console.log("Login response:", response);
-      // Redirect to home page after successful login
       navigate("/feed");
     } catch (error) {
-      if (error.response) {
-        if (error.response.status === 400) {
-          setErrorMsg(error.response.data.message || "Invalid request.");
-        } else {
-          setErrorMsg(
-            `login failed (status ${error.response.status}). Please try again later.`
-          );
-        }
-      }
+      const message =
+        error.response?.data?.message ||
+        (error.response?.status === 401
+          ? "Invalid credentials."
+          : "Login failed. Please try again.");
+      showNotification(message, "error");
+      console.error("Login error:", error.response || error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-brand-offwhite">
-      <div className="w-full max-w-md p-8 space-y-6 border rounded shadow-md">
-        <h1 className="font-heading text-2xl text-brand-gray">User Login</h1>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-brand-offwhite via-brand-peach/20 to-brand-offwhite p-4">
+      <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-xl shadow-lg border border-brand-gray-light space-y-6">
+        {/* Logo */}
+        <img src={logo} alt="ForkedUp Logo" className="h-20 mx-auto mb-4" />
+
+        <h1 className="font-heading text-2xl text-brand-gray text-center font-semibold">
+          User Login
+        </h1>
+
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          {/* Username or Email Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Username
+            <label className="block text-sm font-medium text-brand-gray mb-1.5">
+              Username or Email
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-brand-orange"
-              placeholder="Your Username"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-brand-gray-light rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/50 transition duration-200"
+              placeholder="Your Username or Email"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
+              disabled={isLoading}
             />
           </div>
+
+          {/* Password Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-brand-gray mb-1.5">
               Password
             </label>
             <input
               type="password"
-              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-brand-orange"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-brand-gray-light rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/50 transition duration-200"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
             />
           </div>
+
+          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-2 text-white bg-brand-orange rounded hover:bg-brand-peach hover:text-brand-gray
-"
+            disabled={isLoading}
+            className={`w-full py-2.5 text-white font-heading rounded-lg shadow transition duration-200 ease-in-out flex items-center justify-center ${
+              isLoading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-brand-orange hover:opacity-90 active:scale-[0.98]"
+            }`}
           >
-            Login
+            {isLoading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Processing...
+              </>
+            ) : (
+              "Login"
+            )}
           </button>
         </form>
-        <div className="text-center">
-          <a href="/user/register" className="text-sm text hover:underline">
-            Don't have an account? Register here
-          </a>
+
+        {/* Link to Register */}
+        <div className="text-center text-sm">
+          <span className="text-brand-gray">Don't have an account? </span>
+          <Link
+            to="/user/register"
+            className="font-medium text-brand-orange hover:underline"
+          >
+            Register here
+          </Link>
         </div>
       </div>
     </div>
   );
 };
+
 export default UserLogin;

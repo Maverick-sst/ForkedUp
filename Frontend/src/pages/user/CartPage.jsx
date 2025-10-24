@@ -5,10 +5,11 @@ import axios from "axios";
 import { IoArrowBack, IoAdd } from "react-icons/io5";
 import { FaEdit, FaVideoSlash } from "react-icons/fa";
 import BottomNav from "../../components/BottomNav";
-
+import { useNotification } from "../../components/Notification";
 function CartPage() {
   const { cartItems, updateItemQuantity, totalAmount } = useCart();
   const navigate = useNavigate();
+  const {showNotification} = useNotification();
   const [partnerDetailsMap, setPartnerDetailsMap] = useState({});
   const [isLoadingPartners, setIsLoadingPartners] = useState(false);
 
@@ -82,7 +83,8 @@ function CartPage() {
 
   const handleProceedToCheckout = () => {
     if (cartItems.length === 0) {
-      alert("Your cart is empty!");
+      // alert("Your cart is empty!");
+      showNotification("Your cart is empty!");
       return;
     }
     navigate("/checkout");

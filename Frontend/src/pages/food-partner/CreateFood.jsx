@@ -2,12 +2,13 @@ import { useRef, useState, useEffect } from "react";
 import { FaUpload } from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { useNotification } from "../../components/Notification";
 import axios from "axios";
 
 function CreateFood() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-
+  const { showNotification } = useNotification();
   // State for text-based form data
   const [textData, setTextData] = useState({
     name: "",
@@ -51,7 +52,8 @@ function CreateFood() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!videoFile) {
-      alert("Please select a video to upload.");
+      // alert("Please select a video to upload.");
+      showNotification("Please select a video to upload");
       return;
     }
     setIsSubmitting(true);
@@ -84,11 +86,13 @@ function CreateFood() {
         withCredentials: true,
       });
 
-      alert("Food Added to menu!");
+      // alert("Food Added to menu!");
+      showNotification("Food Added to menu!");
       navigate(-1);
     } catch (error) {
       console.log("Couldn't add food to menu: " + error);
-      alert("Couldn't Add Food. Please try again.");
+      // alert("Couldn't Add Food. Please try again.");
+      showNotification("Couldn't Add Food. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

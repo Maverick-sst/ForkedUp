@@ -50,10 +50,13 @@ async function registerUser(req, res) {
   });
 }
 async function loginUser(req, res) {
-  const { userName, password } = req.body;
+  const { userName, email, password } = req.body;
 
-  // Find user by userName
-  const user = await userModel.findOne({ userName });
+  // Find user by either userName or email
+  const user = await userModel.findOne({
+    $or: [{ userName }, { email }]
+  });
+  
   if (!user) {
     return res.status(401).json({ message: "Invalid Credentials" });
   }
@@ -141,10 +144,12 @@ async function registerFoodPartner(req, res) {
 }
 
 async function loginFoodPartner(req, res) {
-  const { userName, password } = req.body;
+  const { userName, email, password } = req.body;
 
-  // Find food partner by userName
-  const foodPartner = await foodPartnerModel.findOne({ userName });
+  // Find food partner by either userName or email
+  const foodPartner = await foodPartnerModel.findOne({
+    $or: [{ userName }, { email }]
+  });
   if (!foodPartner) {
     return res.status(401).json({ message: "Invalid Credentials" });
   }

@@ -10,8 +10,9 @@ import WorkingHours from "./partnerProfileComponents/WorkingHours";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import updateNestedState from "../../utilities/updateNestedState";
 import { getObjectDiff } from "../../utilities/dataDifference";
-
+import { useNotification } from "../../components/Notification";
 function PartnerProfile() {
+  const {showNotification} = useNotification();
   const navigate = useNavigate();
   const [openSection, setOpenSection] = useState("personal");
   const fileInputRef = useRef(null);
@@ -115,7 +116,8 @@ function PartnerProfile() {
       }));
     } catch (error) {
       console.error("Error uploading profile photo:", error);
-      alert("Failed to upload photo. Please try again.");
+      // alert("Failed to upload photo. Please try again.");
+      showNotification("Failed to upload photo. Please try again")
     }
   };
   const handleFetchLocation = async () => {
@@ -192,11 +194,13 @@ function PartnerProfile() {
         }
       );
       setOriginalProfile(response.data.foodPartner);
-      alert("Profile updated Successfully!");
+      // alert("Profile updated Successfully!");
+      showNotification("Profile updated Successfully!");
       navigate("/dashboard");
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to save changes. Please try again.");
+      // alert("Failed to save changes. Please try again.");
+      showNotification("Failed to save changes. Please try again.");
     }
   };
   const handleSectionClick = (section) => {

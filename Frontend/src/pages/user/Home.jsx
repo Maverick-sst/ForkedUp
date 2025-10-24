@@ -19,7 +19,7 @@ function Home() {
   const [searchError, setSearchError] = useState("");
   const [username, setUsername] = useState("User");
   const [loadingUser, setLoadingUser] = useState(true);
-
+  const bgVideo = "https://ik.imagekit.io/eczrgfwzq/pav.mp4?updatedAt=1761342082076";
   useEffect(() => {
     const fetchUserDetails = async () => {
       setLoadingUser(true);
@@ -108,7 +108,7 @@ function Home() {
     <div className="relative h-screen w-full bg-brand-offwhite text-black overflow-hidden">
       {/* Background overlay video */}
       <video
-        src="/sample-bg.mp4"
+        src={bgVideo}
         autoPlay
         muted
         loop

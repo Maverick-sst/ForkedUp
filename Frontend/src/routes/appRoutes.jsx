@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import LandingPage from "../pages/LandingPage/LandingPage";
 import UserLogin from "../pages/auth/UserLogin";
 import UserRegistration from "../pages/auth/UserRegistration";
 import FoodPartnerLogin from "../pages/auth/FoodPartnerLogin";
@@ -20,6 +21,7 @@ const AppRoutes = () => {
   return (
     <Router>
       <Routes>
+        <Route path="/landing" element={<LandingPage />} />
         <Route path="/user/register" element={<UserRegistration />} />
         <Route path="/user/login" element={<UserLogin />} />
         <Route

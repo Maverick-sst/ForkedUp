@@ -8,12 +8,13 @@ import UserLocationDetails from "./UserProfileComponents/UserLocationDetails";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import updateNestedState from "../../utilities/updateNestedState";
 import { getObjectDiff } from "../../utilities/dataDifference";
+import { useNotification } from "../../components/Notification";
 
 // This component receives an `onClose` function prop from Profile.jsx
 function EditUserProfile({ onClose }) {
   const [openSection, setOpenSection] = useState("personal");
   const fileInputRef = useRef(null);
-
+  const { showNotification } = useNotification();
   const [originalProfile, setOriginalProfile] = useState(null);
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -245,7 +246,8 @@ function EditUserProfile({ onClose }) {
     }
 
     if (Object.keys(updates).length === 0) {
-      alert("No changes detected to save.");
+      // alert("No changes detected to save.");
+      showNotification("No changes detected to save.");
       return;
     }
 
@@ -263,7 +265,8 @@ function EditUserProfile({ onClose }) {
       setOriginalProfile(JSON.parse(JSON.stringify(response.data.user)));
       setFormData(response.data.user);
 
-      alert("Profile updated successfully!");
+      // alert("Profile updated successfully!");
+      showNotification("Profile updated successfully!");
       onClose();
     } catch (error) {
       console.error("Error updating profile:", error);
