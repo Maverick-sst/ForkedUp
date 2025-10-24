@@ -2,12 +2,12 @@ const express = require("express");
 const { authMiddleware } = require("../middlewares/auth.middleware");
 // Import all functions from the controller
 const {
-    addAddress,
-    updateUserProfile,
-    updateAddress,
-    deleteAddress,
-    setDefaultAddress
-    // Import changePassword later if you add it
+  addAddress,
+  updateUserProfile,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
+  // Import changePassword later if you add it
 } = require("../controllers/user.controller");
 
 const router = express.Router();
@@ -31,6 +31,5 @@ router.patch("/default-address", authMiddleware, setDefaultAddress);
 
 // --- Password (Optional - Add later if needed) ---
 // router.patch("/password", authMiddleware, changePassword);
-
 
 module.exports = router;

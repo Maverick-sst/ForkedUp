@@ -1,11 +1,16 @@
 const express = require("express");
 const { authMiddleware } = require("../middlewares/auth.middleware");
-const { createOrder , getPartnerOrders, updateOrderStatus , getOrderById} = require("../controllers/orders.controller"); // Create this
+const {
+  createOrder,
+  getPartnerOrders,
+  updateOrderStatus,
+  getOrderById,
+} = require("../controllers/orders.controller"); // Create this
 
 const router = express.Router();
 
 // POST /api/orders - Create a new order (User authenticated) ---- user
-router.post("/", authMiddleware, createOrder); 
+router.post("/", authMiddleware, createOrder);
 
 // --- Partner Routes ---
 

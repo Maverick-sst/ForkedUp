@@ -1,22 +1,21 @@
-// Frontend/src/pages/user/FoodPartnerProfile.jsx
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import CartButton from "../../components/CartButton";
 import BottomNav from "../../components/BottomNav";
-import { FaSearch, FaTimes } from "react-icons/fa"; // Icons for search
-import SearchResultItem from "../../components/SearchResultItem"; // Import result item
-import _ from "lodash"; // Import lodash for debouncing
+import { FaSearch, FaTimes } from "react-icons/fa";
+import SearchResultItem from "../../components/SearchResultItem";
+import _ from "lodash";
 import { FaUserCheck, FaUserPlus } from "react-icons/fa";
 const FoodPartnerProfile = () => {
-  const { id: partnerId } = useParams(); // Renamed id to partnerId for clarity
+  const { id: partnerId } = useParams();
   const videoRefs = useRef(new Map());
   const [videos, setVideos] = useState([]);
-  const [profile, setProfile] = useState(null); // Initialize as null
+  const [profile, setProfile] = useState(null);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
-  // --- Search & Menu State ---
+  //  Search & Menu State
   const [showMenuSummary, setShowMenuSummary] = useState(false);
   const [menuSummary, setMenuSummary] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -25,15 +24,15 @@ const FoodPartnerProfile = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const menuButtonRef = useRef(null); // Ref for menu button to position summary
-  const summaryTimeoutRef = useRef(null); // Ref for hover timeout
+  const menuButtonRef = useRef(null);
+  const summaryTimeoutRef = useRef(null);
 
-  // --- ADDED: Follow State ---
+  //  Follow State
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [loadingFollowStatus, setLoadingFollowStatus] = useState(true);
-  const [isTogglingFollow, setIsTogglingFollow] = useState(false); // Prevent rapid clicks
-  // --- Combined Initial Data Fetch ---
+  const [isTogglingFollow, setIsTogglingFollow] = useState(false);
+
   useEffect(() => {
     // Reset states when partnerId changes
     setShowSearchBar(false);
@@ -42,9 +41,9 @@ const FoodPartnerProfile = () => {
     setShowMenuSummary(false);
     setMenuSummary(null);
     setLoading(true);
-    setLoadingFollowStatus(true); // Start loading follow status
-    setIsFollowing(false); // Reset follow status optimisticlly
-    setFollowerCount(0); // Reset count
+    setLoadingFollowStatus(true);
+    setIsFollowing(false);
+    setFollowerCount(0);
 
     const fetchInitialData = async () => {
       try {
@@ -77,7 +76,6 @@ const FoodPartnerProfile = () => {
         );
         setProfile(null);
         setVideos([]);
-        // Handle error display if needed
       } finally {
         setLoading(false);
         setLoadingFollowStatus(false);
@@ -85,10 +83,10 @@ const FoodPartnerProfile = () => {
     };
 
     fetchInitialData();
-  }, [partnerId]); // Rerun when partnerId changes
-  // --- Fetch Menu Summary ---
+  }, [partnerId]);
+
   const fetchMenuSummary = async () => {
-    if (loadingSummary || menuSummary) return; // Don't fetch if already loading or loaded
+    if (loadingSummary || menuSummary) return;
 
     setLoadingSummary(true);
     try {
@@ -99,13 +97,11 @@ const FoodPartnerProfile = () => {
       setMenuSummary(response.data.summary);
     } catch (err) {
       console.error("Failed to fetch menu summary:", err);
-      // Handle error silently or show a message
     } finally {
       setLoadingSummary(false);
     }
   };
 
-  // --- Debounced Search for THIS Partner ---
   const debouncedSearch = useCallback(
     _.debounce(async (query) => {
       if (!query.trim()) {
@@ -121,7 +117,7 @@ const FoodPartnerProfile = () => {
         const response = await axios.get(
           `http://localhost:8000/api/food/search?q=${encodeURIComponent(
             query
-          )}&partnerId=${partnerId}`, // Add partnerId
+          )}&partnerId=${partnerId}`,
           { withCredentials: true }
         );
         setSearchResults(response.data.results || []);
@@ -133,14 +129,14 @@ const FoodPartnerProfile = () => {
         setIsSearching(false);
       }
     }, 500),
-    [partnerId] // Recreate debounce function if partnerId changes
+    [partnerId]
   );
-  // --- ADDED: Follow/Unfollow Toggle Handler ---
+  //  Follow/Unfollow Toggle Handler
   const handleFollowToggle = async () => {
-    if (isTogglingFollow || loadingFollowStatus) return; // Prevent action if already processing or initial status unknown
+    if (isTogglingFollow || loadingFollowStatus) return;
 
     setIsTogglingFollow(true);
-    const currentlyFollowing = isFollowing; // Store current state before optimistic update
+    const currentlyFollowing = isFollowing;
 
     // Optimistic UI Update
     setIsFollowing(!currentlyFollowing);
@@ -150,23 +146,21 @@ const FoodPartnerProfile = () => {
 
     try {
       if (currentlyFollowing) {
-        // --- Call Unfollow API ---
         const response = await axios.delete(
           `http://localhost:8000/api/follow/${partnerId}`,
           { withCredentials: true }
         );
-        // Optionally update count with server response for accuracy
+
         if (response.data.followerCount !== undefined) {
           setFollowerCount(response.data.followerCount);
         }
       } else {
-        // --- Call Follow API ---
         const response = await axios.post(
           `http://localhost:8000/api/follow/${partnerId}`,
-          {}, // Empty body for POST
+          {},
           { withCredentials: true }
         );
-        // Optionally update count with server response
+
         if (response.data.followerCount !== undefined) {
           setFollowerCount(response.data.followerCount);
         }
@@ -176,7 +170,7 @@ const FoodPartnerProfile = () => {
       );
     } catch (error) {
       console.error("Error toggling follow:", error);
-      // --- Revert Optimistic Update on Error ---
+
       setIsFollowing(currentlyFollowing);
       setFollowerCount((prevCount) =>
         currentlyFollowing ? prevCount + 1 : Math.max(0, prevCount - 1)
@@ -185,46 +179,44 @@ const FoodPartnerProfile = () => {
         `Failed to ${
           currentlyFollowing ? "unfollow" : "follow"
         }. Please try again.`
-      ); // Basic error feedback
+      );
     } finally {
       setIsTogglingFollow(false);
     }
   };
-  // --- Handle Search Input Change ---
+
   const handleSearchChange = (e) => {
     const newSearchTerm = e.target.value;
     setSearchTerm(newSearchTerm);
     debouncedSearch(newSearchTerm);
   };
 
-  // --- Menu Button Hover/Click Logic ---
   const handleMenuMouseEnter = () => {
-    clearTimeout(summaryTimeoutRef.current); // Clear any pending hide timeout
-    fetchMenuSummary(); // Fetch summary data if not already loaded
+    clearTimeout(summaryTimeoutRef.current);
+    fetchMenuSummary();
     setShowMenuSummary(true);
   };
   const handleMenuMouseLeave = () => {
-    // Hide summary after a short delay to allow moving mouse to summary box
     summaryTimeoutRef.current = setTimeout(() => {
       setShowMenuSummary(false);
-    }, 300); // 300ms delay
+    }, 300);
   };
   const handleSummaryMouseEnter = () => {
-    clearTimeout(summaryTimeoutRef.current); // Keep summary visible if mouse enters it
+    clearTimeout(summaryTimeoutRef.current);
   };
   const handleSummaryMouseLeave = () => {
-    setShowMenuSummary(false); // Hide immediately when mouse leaves summary
+    setShowMenuSummary(false);
   };
   const handleMenuClick = () => {
-    setShowSearchBar(!showSearchBar); // Toggle search bar visibility
-    setShowMenuSummary(false); // Hide summary when clicking menu button
-    setSearchTerm(""); // Clear search on toggle
+    setShowSearchBar(!showSearchBar);
+    setShowMenuSummary(false);
+    setSearchTerm("");
     setSearchResults([]);
     setSearchError("");
   };
 
   const handleVideoClick = (foodId) => {
-    navigate(`/food-partner/${partnerId}/${foodId}`); // Link to specific reel view
+    navigate(`/food-partner/${partnerId}/${foodId}`);
   };
   const handleMouseEnter = (videoId) => {
     const video = videoRefs.current.get(videoId);
@@ -243,8 +235,8 @@ const FoodPartnerProfile = () => {
     if (el) videoRefs.current.set(id, el);
     else videoRefs.current.delete(id);
   };
-  // --- Logic to get current day's timing ---
-  let timingString = "Timings not available"; // Default text
+
+  let timingString = "Timings not available";
   if (profile?.workingHours && profile.workingHours.length === 7) {
     const todayIndex = new Date().getDay(); // 0 = Sunday, 1 = Monday...
     const todaySchedule = profile.workingHours[todayIndex];
@@ -303,7 +295,7 @@ const FoodPartnerProfile = () => {
             />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-800">
+            <h1 className="font-heading text-2xl text-brand-gray font-semibold text-gray-800">
               {profile.name}
             </h1>
             <p className="text-sm text-gray-500">
@@ -325,14 +317,13 @@ const FoodPartnerProfile = () => {
 
       {/* Follow button, Opening hours */}
       <div className="flex items-center justify-between mb-6">
-        {/* --- MODIFIED: Follow/Unfollow Button --- */}
         <button
           onClick={handleFollowToggle}
-          disabled={isTogglingFollow || loadingFollowStatus} // Disable while loading status or toggling
+          disabled={isTogglingFollow || loadingFollowStatus}
           className={`px-4 py-1 rounded-full text-sm font-medium transition-colors duration-200 flex items-center gap-1.5 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
             isFollowing
-              ? "bg-gray-200 text-gray-700 hover:bg-gray-300" // Style for 'Following'
-              : "bg-blue-500 text-white hover:bg-blue-600" // Style for 'Follow'
+              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              : "bg-blue-500 text-white hover:bg-blue-600"
           }`}
         >
           {loadingFollowStatus ? (

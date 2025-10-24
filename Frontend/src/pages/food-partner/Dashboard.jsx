@@ -1,17 +1,15 @@
-import React, { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaTimesCircle, FaCheckCircle } from "react-icons/fa";
 import ProgressRing from "../../components/ProgressRing";
 import axios from "axios";
 
-// ===================================================================================
-// 1. ONBOARDING VIEW: Shown to new partners who need to complete their profile.
-// ===================================================================================
+//  ONBOARDING VIEW: Shown to new partners who need to complete their profile.
 const OnboardingView = () => {
-  const profileCompletion = 25; // Placeholder percentage
+  const profileCompletion = 25;
 
   return (
-    <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center text-center animate-fade-in">
+    <div className="w-full max-w-sm bg-brand-offwhite rounded-2xl shadow-lg p-8 flex flex-col items-center text-center animate-fade-in">
       <p className="text-brand-gray mb-6">
         Complete your profile to start selling
       </p>
@@ -28,18 +26,16 @@ const OnboardingView = () => {
   );
 };
 
-// ===================================================================================
-// 2. OPERATIONAL DASHBOARD: The main control center for an active partner.
-// ===================================================================================
+// OPERATIONAL DASHBOARD: The main control center for an active partner.
+
 const OperationalDashboard = () => {
   const [pendingOrders, setPendingOrders] = useState([]); // State for new orders
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [errorOrders, setErrorOrders] = useState(null);
 
-  // --- Function to fetch pending orders ---
   const fetchPendingOrders = useCallback(async () => {
     // Avoid fetching if already loading, unless explicitly told to refresh
-    // if (isLoadingOrders) return; // Might uncomment this later depending on polling strategy
+    // if (isLoadingOrders) return;
 
     setIsLoadingOrders(true);
     setErrorOrders(null);
@@ -65,15 +61,11 @@ const OperationalDashboard = () => {
   useEffect(() => {
     // Fetch immediately on component mount
     fetchPendingOrders();
-
-    // Set up the interval for polling (e.g., every 20 seconds)
     const intervalId = setInterval(fetchPendingOrders, 20000); // 20000 ms = 20 seconds
 
-    // Cleanup function: clear the interval when the component unmounts
     return () => clearInterval(intervalId);
-  }, [fetchPendingOrders]); // Dependency array includes the fetch function
+  }, [fetchPendingOrders]);
 
-  // --- Handler for updating order status ---
   const handleUpdateStatus = async (orderId, newStatus) => {
     // Prevent multiple clicks while processing
     // A more robust solution might disable buttons specifically for that order
@@ -86,12 +78,10 @@ const OperationalDashboard = () => {
         { withCredentials: true }
       );
 
-      // Optimistically remove the order from the pending list
       setPendingOrders((prevOrders) =>
         prevOrders.filter((order) => order._id !== orderId)
       );
       console.log(`Order ${orderId} status updated to ${newStatus}`);
-      // Optionally show a success notification
     } catch (err) {
       console.error(
         `Failed to update order ${orderId} to status ${newStatus}:`,
@@ -100,21 +90,17 @@ const OperationalDashboard = () => {
       setErrorOrders(
         `Failed to update order status. ${err.response?.data?.message || ""}`
       );
-      // Optionally show an error notification to the user
     }
-    // No finally block to change a global loading state, as actions are per-order
   };
 
   return (
     <div className="w-full max-w-md flex flex-col gap-6 animate-fade-in">
-      {/* --- Restaurant Status (Immediate Actions) --- */}
-      {/* (Restaurant Status section remains largely the same) */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-heading text-xl text-brand-gray">
             Restaurant Status
           </h2>
-          {/* (Online/Offline Toggle remains the same) */}
+
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -129,7 +115,6 @@ const OperationalDashboard = () => {
           </label>
         </div>
 
-        {/* --- NEW ORDERS SECTION --- */}
         <div className="border-t border-brand-gray-light pt-4">
           <h3 className="font-heading text-lg text-brand-gray mb-2">
             New Orders ({pendingOrders.length})
@@ -149,16 +134,13 @@ const OperationalDashboard = () => {
             </div>
           )}
 
-          {/* List of Pending Orders */}
           <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
             {" "}
-            {/* Limit height and add scroll */}
             {pendingOrders.map((order) => (
               <div
                 key={order._id}
                 className="border border-brand-gray-light rounded-lg p-4 bg-gray-50 shadow-sm"
               >
-                {/* Order Header: User + Time */}
                 <div className="flex justify-between items-center mb-2 pb-2 border-b">
                   <div>
                     <p className="text-sm font-semibold text-brand-gray">
@@ -167,7 +149,6 @@ const OperationalDashboard = () => {
                     <p className="text-xs text-gray-500">
                       Order ID: ...{order._id.slice(-6)}
                     </p>{" "}
-                    {/* Short ID */}
                   </div>
                   <p className="text-xs text-gray-500">
                     {new Date(order.createdAt).toLocaleTimeString([], {
@@ -242,17 +223,14 @@ const OperationalDashboard = () => {
   );
 };
 
-// ===================================================================================
-// 3. MAIN DASHBOARD COMPONENT: Decides which view to render.
-// ===================================================================================
+// MAIN DASHBOARD COMPONENT: Decides which view to render.
+
 function Dashboard() {
-  // --- Profile Completion Logic ---
   const [isProfileComplete, setIsProfileComplete] = useState(null); // Start as null/loading
   const [username, setUsername] = useState("Partner");
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
-    // Fetch partner details to check profile status and get username
     const fetchProfile = async () => {
       setLoadingProfile(true);
       try {
@@ -262,7 +240,7 @@ function Dashboard() {
         if (response.data?.foodPartner) {
           const partner = response.data.foodPartner;
           setUsername(partner.userName || "Partner");
-          // Define your criteria for a "complete" profile
+
           const complete = !!(
             partner.name &&
             partner.email &&
@@ -288,7 +266,7 @@ function Dashboard() {
       <div className="flex justify-center items-center min-h-screen">
         Loading Dashboard...
       </div>
-    ); // Or a proper loading spinner
+    );
   }
 
   return (

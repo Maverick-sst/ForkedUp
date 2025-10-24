@@ -3,9 +3,9 @@ import { useLocation, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { FaHeart, FaShareAlt, FaCommentDots, FaBookmark } from "react-icons/fa";
 import { ArrowLeft, Play, Pause } from "lucide-react";
-import { useCart } from "../context/CartContext"; // Corrected path
-import CommentPanel from "./CommentPanel"; // Corrected path
-import BottomNav from "./BottomNav"; // Corrected path
+import { useCart } from "../context/CartContext";
+import CommentPanel from "./CommentPanel";
+import BottomNav from "./BottomNav";
 
 // This component now behaves very similarly to Reel.jsx
 // It accepts listOfVideos from location state and manages interactions internally
@@ -16,8 +16,8 @@ function UserProfileReelsViewer() {
   const navigate = useNavigate();
   const { addItemToCart } = useCart();
   // Use Sets for interaction state, mirroring Feed.jsx
-const [likedSet, setLikedSet] = useState(new Set());
-const [savedSet, setSavedSet] = useState(new Set());
+  const [likedSet, setLikedSet] = useState(new Set());
+  const [savedSet, setSavedSet] = useState(new Set());
   // Get reels and starting point from navigation state
   const initialReels = location.state?.reels || [];
   const startIndex = location.state?.startIndex || 0;
@@ -34,47 +34,49 @@ const [savedSet, setSavedSet] = useState(new Set());
   const containerRef = useRef(null);
   const initialScrollDone = useRef(false);
   const observer = useRef(); // Store observer instance in ref
-  // --- Fetch Interactions on Initial Load ---
-// Fetch like/save status for all videos passed in state
-useEffect(() => {
+  // Fetch Interactions on Initial Load ---
+  // Fetch like/save status for all videos passed in state
+  useEffect(() => {
     const fetchInitialInteractions = async () => {
-        // Ensure initialReels is populated and not empty
-        if (!initialReels || initialReels.length === 0) {
-            console.log("No initial reels to fetch interactions for.");
-            return;
-        }
-        // Get valid video IDs
-        const videoIds = initialReels
-            .map((v) => v?._id) // Safely access _id
-            .filter(id => id && /^[0-9a-fA-F]{24}$/.test(id)) // Filter out invalid/missing IDs
-            .join(",");
+      // Ensure initialReels is populated and not empty
+      if (!initialReels || initialReels.length === 0) {
+        console.log("No initial reels to fetch interactions for.");
+        return;
+      }
+      // Get valid video IDs
+      const videoIds = initialReels
+        .map((v) => v?._id) // Safely access _id
+        .filter((id) => id && /^[0-9a-fA-F]{24}$/.test(id)) // Filter out invalid/missing IDs
+        .join(",");
 
-        if (!videoIds) {
-            console.log("No valid video IDs found to fetch interactions.");
-            return; // Stop if no valid IDs
-        }
+      if (!videoIds) {
+        console.log("No valid video IDs found to fetch interactions.");
+        return; // Stop if no valid IDs
+      }
 
-        console.log(`Fetching initial interactions for video IDs: ${videoIds}`);
-        try {
-            const res = await axios.get(
-                `http://localhost:8000/api/feature/interactions?ids=${videoIds}`,
-                { withCredentials: true }
-            );
-            const { liked, saved } = res.data;
-            // Initialize the sets with fetched IDs
-            setLikedSet(new Set(liked || [])); // Ensure liked/saved are arrays
-            setSavedSet(new Set(saved || []));
-            console.log("Initial interactions fetched:", { liked: liked?.length, saved: saved?.length });
-        } catch (err) {
-            console.error("Failed to fetch initial interactions:", err);
-            // Handle error appropriately - maybe show a message or just log it
-            // For now, sets will remain empty on error
-        }
+      console.log(`Fetching initial interactions for video IDs: ${videoIds}`);
+      try {
+        const res = await axios.get(
+          `http://localhost:8000/api/feature/interactions?ids=${videoIds}`,
+          { withCredentials: true }
+        );
+        const { liked, saved } = res.data;
+        // Initialize the sets with fetched IDs
+        setLikedSet(new Set(liked || [])); // Ensure liked/saved are arrays
+        setSavedSet(new Set(saved || []));
+        console.log("Initial interactions fetched:", {
+          liked: liked?.length,
+          saved: saved?.length,
+        });
+      } catch (err) {
+        console.error("Failed to fetch initial interactions:", err);
+        // Handle error appropriately - maybe show a message or just log it
+        // For now, sets will remain empty on error
+      }
     };
     fetchInitialInteractions();
-// Run only once when the component mounts based on the initial list
-}, [initialReels]);
-
+    // Run only once when the component mounts based on the initial list
+  }, [initialReels]);
 
   // Fetch Partner Info (Same as previous version)
   useEffect(() => {
@@ -128,7 +130,7 @@ useEffect(() => {
 
         if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
           if (!isActiveVideoId || isActiveVideoId === videoId) {
-            videoElement.play().catch((e) => {}); // Muted autoplay usually allowed
+            videoElement.play().catch((e) => {});
             if (isActiveVideoId !== videoId) setIsActiveVideoId(videoId);
             setIsVideoPaused(false);
           } else {
@@ -208,90 +210,90 @@ useEffect(() => {
     }
   }, [isActiveVideoId]); // Depends on isActiveVideoId
 
-  // --- Interaction Handlers (Like/Save) - Mirroring Reel.jsx internal logic ---
+  // Interaction Handlers (Like/Save) - Mirroring Reel.jsx internal logic
   // These update the local 'videos' state optimistically first, then call API, then revert if needed
- // --- Interaction Handlers (Like/Save) - Using Sets ---
-const handleLike = useCallback(async (videoId, currentLikeStatus) => {
+  // Interaction Handlers (Like/Save) - Using Sets
+  const handleLike = useCallback(async (videoId, currentLikeStatus) => {
     if (!videoId) return;
 
     // 1. Optimistic UI Update using setLikedSet
     setLikedSet((prevLikedSet) => {
-        const newSet = new Set(prevLikedSet);
-        if (currentLikeStatus) newSet.delete(videoId); // Unlike
-        else newSet.add(videoId); // Like
-        return newSet;
+      const newSet = new Set(prevLikedSet);
+      if (currentLikeStatus) newSet.delete(videoId); // Unlike
+      else newSet.add(videoId); // Like
+      return newSet;
     });
     // Also update count optimistically in 'videos' state
-    setVideos(currentVideos =>
-        currentVideos.map(video => {
-            if (video._id === videoId) {
-                const newLikeCount = currentLikeStatus ? Math.max(0, (video.likeCount || 0) - 1) : (video.likeCount || 0) + 1;
-                return { ...video, likeCount: newLikeCount };
-            }
-            return video;
-        })
+    setVideos((currentVideos) =>
+      currentVideos.map((video) => {
+        if (video._id === videoId) {
+          const newLikeCount = currentLikeStatus
+            ? Math.max(0, (video.likeCount || 0) - 1)
+            : (video.likeCount || 0) + 1;
+          return { ...video, likeCount: newLikeCount };
+        }
+        return video;
+      })
     );
 
     // 2. API Call
     try {
-        const url = 'http://localhost:8000/api/feature/like';
-        const config = { withCredentials: true };
-        if (currentLikeStatus) await axios.delete(url, { data: { videoId }, ...config });
-        else await axios.post(url, { videoId }, config);
+      const url = "http://localhost:8000/api/feature/like";
+      const config = { withCredentials: true };
+      if (currentLikeStatus)
+        await axios.delete(url, { data: { videoId }, ...config });
+      else await axios.post(url, { videoId }, config);
     } catch (error) {
-        console.error("Like API failed:", error);
-        // 3. Revert UI on failure
-        setLikedSet((prevLikedSet) => {
-            const newSet = new Set(prevLikedSet);
-            if (currentLikeStatus) newSet.add(videoId); // Add back if delete failed
-            else newSet.delete(videoId); // Remove if add failed
-            return newSet;
-        });
-        // Revert count
-        setVideos(currentVideos =>
-            currentVideos.map(video => {
-                if (video._id === videoId) {
-                    const revertedLikeCount = currentLikeStatus ? (video.likeCount || 0) + 1 : Math.max(0, (video.likeCount || 1) - 1);
-                    return { ...video, likeCount: revertedLikeCount };
-                }
-                return video;
-            })
-        );
-        // alert(`Failed to ${currentLikeStatus ? 'unlike' : 'like'}.`); // Optional user feedback
+      console.error("Like API failed:", error);
+      // 3. Revert UI on failure
+      setLikedSet((prevLikedSet) => {
+        const newSet = new Set(prevLikedSet);
+        if (currentLikeStatus) newSet.add(videoId); // Add back if delete failed
+        else newSet.delete(videoId); // Remove if add failed
+        return newSet;
+      });
+      // Revert count
+      setVideos((currentVideos) =>
+        currentVideos.map((video) => {
+          if (video._id === videoId) {
+            const revertedLikeCount = currentLikeStatus
+              ? (video.likeCount || 0) + 1
+              : Math.max(0, (video.likeCount || 1) - 1);
+            return { ...video, likeCount: revertedLikeCount };
+          }
+          return video;
+        })
+      );
     }
-}, []); // Empty dependencies
+  }, []);
 
-const handleSave = useCallback(async (videoId, currentSaveStatus) => {
+  const handleSave = useCallback(async (videoId, currentSaveStatus) => {
     if (!videoId) return;
 
-    // 1. Optimistic UI Update using setSavedSet
     setSavedSet((prevSavedSet) => {
-        const newSet = new Set(prevSavedSet);
-        if (currentSaveStatus) newSet.delete(videoId); // Unsave
-        else newSet.add(videoId); // Save
-        return newSet;
+      const newSet = new Set(prevSavedSet);
+      if (currentSaveStatus) newSet.delete(videoId); // Unsave
+      else newSet.add(videoId); // Save
+      return newSet;
     });
 
-    // 2. API Call
     try {
-        const url = 'http://localhost:8000/api/feature/save';
-        const config = { withCredentials: true };
-        if (currentSaveStatus) await axios.delete(url, { data: { videoId }, ...config });
-        else await axios.post(url, { videoId }, config);
+      const url = "http://localhost:8000/api/feature/save";
+      const config = { withCredentials: true };
+      if (currentSaveStatus)
+        await axios.delete(url, { data: { videoId }, ...config });
+      else await axios.post(url, { videoId }, config);
     } catch (error) {
-        console.error("Save API failed:", error);
-        // 3. Revert UI on failure
-        setSavedSet((prevSavedSet) => {
-            const newSet = new Set(prevSavedSet);
-            if (currentSaveStatus) newSet.add(videoId); // Add back if delete failed
-            else newSet.delete(videoId); // Remove if add failed
-            return newSet;
-        });
-        // alert(`Failed to ${currentSaveStatus ? 'unsave' : 'save'}.`); // Optional user feedback
-    }
-}, []); // Empty dependencies
+      console.error("Save API failed:", error);
 
-  // Other Handlers (Comment, Buy, Close Panel - Same as previous version)
+      setSavedSet((prevSavedSet) => {
+        const newSet = new Set(prevSavedSet);
+        if (currentSaveStatus) newSet.add(videoId); // Add back if delete failed
+        else newSet.delete(videoId); // Remove if add failed
+        return newSet;
+      });
+    }
+  }, []);
   const handleCommentClick = (e, videoId) => {
     e.stopPropagation();
     const videoElement = videoRefs.current.get(videoId);
@@ -305,7 +307,6 @@ const handleSave = useCallback(async (videoId, currentSaveStatus) => {
     const previouslyActiveVideoId = openCommentPanelId;
     setOpenCommentPanelId(null);
     if (previouslyActiveVideoId === isActiveVideoId && !isVideoPaused) {
-      // Check !isVideoPaused before resuming
       const activeVideo = videoRefs.current.get(isActiveVideoId);
       if (activeVideo && activeVideo.paused)
         activeVideo.play().catch((e) => {});
@@ -325,13 +326,11 @@ const handleSave = useCallback(async (videoId, currentSaveStatus) => {
     console.log(`${item.name} added to Cart`);
   };
 
-  // Ref callback (Same as previous version)
   const setVideoRef = useCallback((node, videoId) => {
     if (node) videoRefs.current.set(videoId, node);
     else videoRefs.current.delete(videoId);
   }, []);
 
-  // --- Render ---
   if (videos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-black text-white">
@@ -344,17 +343,16 @@ const handleSave = useCallback(async (videoId, currentSaveStatus) => {
   }
 
   // Prepare videos with counts defaulted to 0 if null/undefined
-// Prepare videos with interaction status from Sets
-const videosToRender = videos.map((v) => ({
-  ...v,
-  likedByUser: likedSet.has(v._id), // Use likedSet
-  savedByUser: savedSet.has(v._id), // Use savedSet
-  likeCount: v.likeCount ?? 0,
-  commentCount: v.commentCount ?? 0,
-}));
+  // Prepare videos with interaction status from Sets
+  const videosToRender = videos.map((v) => ({
+    ...v,
+    likedByUser: likedSet.has(v._id), // Use likedSet
+    savedByUser: savedSet.has(v._id), // Use savedSet
+    likeCount: v.likeCount ?? 0,
+    commentCount: v.commentCount ?? 0,
+  }));
 
   return (
-    // Structure is identical to Reel.jsx, using 'videosToRender' state
     <div
       onClick={handleClick}
       className="fixed inset-0 h-dvh w-screen overflow-hidden bg-black select-none"
@@ -393,9 +391,9 @@ const videosToRender = videos.map((v) => ({
                   <div className="bg-black/50 p-4 rounded-full">
                     {/* Added background */}
                     {isVideoPaused ? (
-                      <Play size={49} fill="white" className="text-white/90" /> // Adjusted opacity
+                      <Play size={49} fill="white" className="text-white/90" />
                     ) : (
-                      <Pause size={49} fill="white" className="text-white/90" /> // Adjusted opacity
+                      <Pause size={49} fill="white" className="text-white/90" />
                     )}
                   </div>
                 </div>

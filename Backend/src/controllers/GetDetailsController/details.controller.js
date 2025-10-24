@@ -28,8 +28,7 @@ async function getMyDetails(req, res) {
         message: "Internal Server Error",
       });
     }
-  }
-  else if(req.role === "user"){
+  } else if (req.role === "user") {
     if (!req.user) {
       return res.status(401).json({
         message: "Unauthorized access",
@@ -38,9 +37,7 @@ async function getMyDetails(req, res) {
 
     const userId = req.user._id;
     try {
-      const user = await userModel
-        .findById(userId)
-        .select("-password");
+      const user = await userModel.findById(userId).select("-password");
       if (!user) {
         return res.status(404).json({
           message: "No Such User Found",

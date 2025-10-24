@@ -1,6 +1,5 @@
-import React from "react";
-import { FaUser, FaEnvelope, FaLock, FaPhone } from "react-icons/fa";
-import AccordionSection from "../../../components/AccordionSection"; // Adjust path if needed
+import { FaUser } from "react-icons/fa";
+import AccordionSection from "../../../components/AccordionSection";
 
 const UserPersonalDetails = ({ userData, isOpen, onToggle, onInputChange }) => {
   return (
@@ -89,7 +88,7 @@ const UserPersonalDetails = ({ userData, isOpen, onToggle, onInputChange }) => {
         />
       </div>
 
-      {/* Password - Placeholder for change functionality */}
+      {/* Password */}
       <div className="mb-3">
         <label
           htmlFor="password"
@@ -103,12 +102,10 @@ const UserPersonalDetails = ({ userData, isOpen, onToggle, onInputChange }) => {
           name="password"
           placeholder="Enter new password to change"
           onChange={onInputChange}
-          // DO NOT set 'value' for password fields unless specifically needed and handled securely
           className="w-full border-gray-300 rounded-lg shadow-sm focus:border-brand-orange focus:ring-brand-orange text-sm p-2"
         />
         <p className="text-xs text-gray-500 mt-1">
-          Leave blank to keep current password. Requires separate confirmation
-          in a real app.
+          Leave blank to keep current password.
         </p>
       </div>
     </AccordionSection>

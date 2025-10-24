@@ -1,7 +1,6 @@
-// Frontend/src/pages/user/Feed.jsx
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
-import Reel from "../../components/Reel"; // Ensure this path is correct
+import Reel from "../../components/Reel";
 
 function Feed() {
   const [videos, setVideos] = useState([]);
@@ -16,7 +15,7 @@ function Feed() {
 
   const observer = useRef(); // For IntersectionObserver
 
-  // --- API Call 1: Fetch interactions for the given videos ---
+  // API Call 1: Fetch interactions for the given videos
   const fetchInteractions = useCallback(async (videoItems) => {
     if (videoItems.length === 0) return;
 
@@ -77,7 +76,6 @@ function Feed() {
     [fetchInteractions]
   ); // Depends on fetchInteractions
 
-  // --- Initial Load ---
   useEffect(() => {
     // Clear old data and fetch page 1 on mount
     setVideos([]);
@@ -111,9 +109,6 @@ function Feed() {
     [loading, hasMore, fetchVideos]
   );
 
-  // --- Optimistic Update Handlers ---
-  // These functions update the state *immediately* for a snappy UI.
-  // The Reel component will still make its API call.
   const handleLikeToggle = useCallback((videoId, currentStatus) => {
     setLikedSet((prevLikedSet) => {
       const newSet = new Set(prevLikedSet);
@@ -138,7 +133,6 @@ function Feed() {
     });
   }, []);
 
-  // --- Prepare videos with up-to-date interaction status ---
   // This is crucial. We merge the video data with our interaction state
   // before passing it down to the Reel component.
   const videosWithStatus = videos.map((video) => ({
@@ -147,11 +141,12 @@ function Feed() {
     savedByUser: savedSet.has(video._id),
   }));
 
-  // --- Render Logic ---
   if (loading && page === 1) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <h1 className="text-xl">Loading Feed...</h1>
+        <h1 className="font-heading text-2xl text-brand-gray">
+          Loading Feed...
+        </h1>
       </div>
     );
   }
@@ -159,7 +154,9 @@ function Feed() {
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <h1 className="text-xl text-red-500">{error}</h1>
+        <h1 className="font-heading text-2xl text-brand-gray text-red-500">
+          {error}
+        </h1>
       </div>
     );
   }
@@ -167,7 +164,9 @@ function Feed() {
   if (videos.length === 0 && !loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <h1 className="text-xl">No videos found.</h1>
+        <h1 className="font-heading text-2xl text-brand-gray">
+          No videos found.
+        </h1>
       </div>
     );
   }

@@ -57,7 +57,7 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
     };
   }, [videos]); // Still depends on internal videos state
 
-  // *** NEW useEffect: Fetch partner details efficiently ***
+  //  Fetch partner details efficiently
   useEffect(() => {
     // Only proceed if there are videos
     if (!videos || videos.length === 0) return;
@@ -121,7 +121,6 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
     // 6. Dependency: Re-run this effect if the `videos` list changes or partnerInfoMap updates.
   }, [videos, partnerInfoMap]);
 
-  // handleClick remains the same
   function handleClick() {
     if (!isActiveVideoId) return;
     const activeVideo = videoRefs.current.get(isActiveVideoId);
@@ -139,7 +138,6 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
     }
   }
 
-  // --- UPDATED handleLike ---
   async function handleLike(videoId, currentLikeStatus) {
     if (!isActiveVideoId) return;
 
@@ -190,7 +188,6 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
     }
   }
 
-  // --- UPDATED handleSave ---
   async function handleSave(videoId, currentSaveStatus) {
     if (!isActiveVideoId) return;
 
@@ -240,7 +237,7 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
     }
   }
 
-  // handleBuyClick and closeCommentPanel remain the same
+  // handleBuyClick and closeCommentPanel
   const handleBuyClick = (e, item) => {
     e.stopPropagation();
     addItemToCart(item);
@@ -299,25 +296,23 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
               ref={index === videos.length - 1 ? lastVideoRef : null}
               key={item._id} // Use item._id or index as fallback: key={item._id || index}
               style={{
-                height: "100dvh", // Consider using "100dvh" for dynamic viewport height
+                height: "100dvh",
                 width: "100%",
                 position: "relative",
                 scrollSnapAlign: "start",
-                backgroundColor: "black", // Added fallback background
+                backgroundColor: "black",
               }}
-              className="flex items-center justify-center" // Added flex centering
-              aria-label={`Reel for ${item.name || "food item"}`} // Accessibility
+              className="flex items-center justify-center"
+              aria-label={`Reel for ${item.name || "food item"}`}
             >
               {/* {Pause & Play} */}
               {isIconDisplayed && isActiveVideoId === item._id && (
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity duration-500 ease-in-out z-10 animate-fade-in-out">
-                  {/* Added animation class */}
                   <div className="bg-black/50 p-4 rounded-full">
-                    {/* Added background */}
                     {isVideoPaused ? (
-                      <Play size={49} fill="white" className="text-white/90" /> // Adjusted opacity
+                      <Play size={49} fill="white" className="text-white/90" />
                     ) : (
-                      <Pause size={49} fill="white" className="text-white/90" /> // Adjusted opacity
+                      <Pause size={49} fill="white" className="text-white/90" />
                     )}
                   </div>
                 </div>
@@ -336,7 +331,6 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
                 loop
                 preload="metadata"
                 data-id={item._id}
-                // Update pause/play state based on video events
                 onPause={() => {
                   if (isActiveVideoId === item._id) setisVideoPaused(true);
                 }}
@@ -344,7 +338,7 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
                   if (isActiveVideoId === item._id) setisVideoPaused(false);
                 }}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                className="block" // Ensure video takes up space
+                className="block"
               />
 
               {/* Gradient Overlay for Text Readability */}
@@ -357,11 +351,10 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
                     e.stopPropagation();
                     handleLike(item._id, item.likedByUser);
                   }}
-                  className="flex flex-col items-center gap-1 text-center group" // Added group class
+                  className="flex flex-col items-center gap-1 text-center group"
                   aria-label={item.likedByUser ? "Unlike" : "Like"}
                 >
                   <div className="p-3 bg-black/40 backdrop-blur-sm rounded-full group-hover:bg-white/20 transition duration-200">
-                    {/* Adjusted style */}
                     <FaHeart
                       size={24}
                       color={item.likedByUser ? "#FF4040" : "white"}
@@ -369,12 +362,10 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
                         item.likedByUser ? "scale-110" : "group-hover:scale-110"
                       }`}
                     />
-                    {/* Added hover effect */}
                   </div>
                   <span className="text-xs font-semibold drop-shadow-md">
                     {likeCount}
                   </span>
-                  {/* Use likeCount */}
                 </button>
 
                 {/* Comment Button */}
@@ -382,22 +373,19 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
                   onClick={(e) => {
                     e.stopPropagation();
                     handleCommentClick(e, item._id);
-                  }} // Use handleCommentClick
+                  }}
                   className="flex flex-col items-center gap-1 text-center group z-20" // Added group class
                   aria-label="View comments"
                 >
                   <div className="p-3 bg-black/40 backdrop-blur-sm rounded-full group-hover:bg-white/20 transition duration-200">
-                    {/* Adjusted style */}
                     <FaCommentDots
                       size={22}
                       className="group-hover:scale-110 transition-transform duration-200"
                     />
-                    {/* Added hover effect */}
                   </div>
                   <span className="text-xs font-semibold drop-shadow-md">
                     {commentCount}
                   </span>
-                  {/* Use commentCount */}
                 </button>
 
                 {/* Save Button */}
@@ -406,11 +394,10 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
                     e.stopPropagation();
                     handleSave(item._id, item.savedByUser);
                   }}
-                  className="flex flex-col items-center gap-1 text-center group" // Added group class
+                  className="flex flex-col items-center gap-1 text-center group"
                   aria-label={item.savedByUser ? "Unsave" : "Save"}
                 >
                   <div className="p-3 bg-black/40 backdrop-blur-sm rounded-full group-hover:bg-white/20 transition duration-200">
-                    {/* Adjusted style */}
                     <FaBookmark
                       size={23}
                       color={item.savedByUser ? "#FFB703" : "white"}
@@ -418,42 +405,35 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
                         item.savedByUser ? "scale-110" : "group-hover:scale-110"
                       }`}
                     />
-                    {/* Adjusted color, added hover */}
                   </div>
-                  {/* Save count usually not shown */}
                 </button>
 
-                {/* Share Button (no change) */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     alert("Share clicked!");
                   }}
-                  className="flex flex-col items-center gap-1 text-center group" // Added group class
+                  className="flex flex-col items-center gap-1 text-center group"
                   aria-label="Share"
                 >
                   <div className="p-3 bg-black/40 backdrop-blur-sm rounded-full group-hover:bg-white/20 transition duration-200">
-                    {/* Adjusted style */}
                     <FaShareAlt
                       size={22}
                       className="group-hover:scale-110 transition-transform duration-200"
                     />
-                    {/* Added hover effect */}
                   </div>
                 </button>
               </div>
 
               {/* Bottom info + buttons */}
-              {/* Adjusted bottom position and z-index */}
+
               <div className="absolute bottom-16 md:bottom-12 left-0 w-full px-4 flex flex-col gap-3 z-20">
                 <div className="flex flex-col gap-1 text-white text-shadow">
-                  {/* Added text-shadow */}
                   <Link
                     to={`/food-partner/${item.foodPartner}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-2 group w-fit" // Added w-fit
+                    className="flex items-center gap-2 group w-fit"
                   >
-                    {/* *** MODIFIED PROFILE IMAGE *** */}
                     <img
                       src={
                         partnerInfo.profilePhoto ||
@@ -464,26 +444,24 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
                       alt={partnerInfo.name} // Use fetched name for alt text
                       className="w-8 h-8 rounded-full object-cover border border-white/30 flex-shrink-0 bg-gray-500" // Added bg-gray-500 fallback
                     />
-                    {/* *** MODIFIED PARTNER NAME *** */}
+
                     <span className="font-semibold text-sm group-hover:underline">
-                      {partnerInfo.name} {/* Display fetched name */}
+                      {partnerInfo.name}
                     </span>
                   </Link>
                   <p className="text-xs line-clamp-2">
                     {item.description || " "}
-                    {/* Default to space if no description */}
                   </p>
-                  {/* Price Display */}
+
                   <p className="text-sm font-semibold flex justify-between items-center mt-1">
-                    {/* Added mt-1 */}
                     <span>{item.name}</span>
                     <span className="text-brand-orange font-bold text-base">
-                      {/* Increased size */}₹{item.price?.toFixed(2)}
+                      ₹{item.price?.toFixed(2)}
                     </span>
                   </p>
                 </div>
 
-                {/* Action Buttons - Adjusted styling */}
+                {/* Action Buttons */}
                 <div className="flex gap-3">
                   <button
                     onClick={(e) => handleBuyClick(e, item)}

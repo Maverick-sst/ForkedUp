@@ -42,11 +42,11 @@ const FoodPartnerLogin = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white">
+    <div className="flex items-center justify-center min-h-screen bg-brand-offwhite">
       <div className="w-full max-w-md p-8 space-y-6 border rounded shadow-md">
-        <h2 className="text-2xl font-bold text-center text-[#ef233c]">
+        <h1 className="font-heading text-2xl text-brand-gray">
           Food Partner Login
-        </h2>
+        </h1>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -54,7 +54,7 @@ const FoodPartnerLogin = () => {
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-[#ef233c]"
+              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-brand-orange"
               placeholder="your username"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
@@ -66,7 +66,7 @@ const FoodPartnerLogin = () => {
             </label>
             <input
               type="password"
-              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-[#ef233c]"
+              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-brand-orange"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -74,7 +74,8 @@ const FoodPartnerLogin = () => {
           </div>
           <button
             type="submit"
-            className="w-full py-2 text-white bg-[#ef233c] rounded hover:bg-[#d01c33]"
+            className="w-full py-2 text-white bg-brand-orange rounded hover:bg-brand-peach hover:text-brand-gray
+"
           >
             Login
           </button>

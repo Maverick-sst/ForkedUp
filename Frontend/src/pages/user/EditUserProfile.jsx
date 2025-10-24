@@ -1,22 +1,16 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-
-// Corrected react-icons imports
+import { useState, useRef, useEffect, useCallback } from "react";
 import { FaPen } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 
-// Corrected relative path for components
 import UserPersonalDetails from "./UserProfileComponents/UserPersonalDetails";
 import UserLocationDetails from "./UserProfileComponents/UserLocationDetails";
-
-// Corrected relative path for hooks and utilities
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import updateNestedState from "../../utilities/updateNestedState";
 import { getObjectDiff } from "../../utilities/dataDifference";
 
 // This component receives an `onClose` function prop from Profile.jsx
 function EditUserProfile({ onClose }) {
-  // const navigate = useNavigate(); // Unused navigation removed
   const [openSection, setOpenSection] = useState("personal");
   const fileInputRef = useRef(null);
 
@@ -29,7 +23,6 @@ function EditUserProfile({ onClose }) {
   const { location, status: geoStatus, requestLocation } = useGeoLocation();
   const [targetAddressIndexForGeo, setTargetAddressIndexForGeo] =
     useState(null);
-  // --- Fetch Initial User Data ---
   useEffect(() => {
     const fetchProfileData = async () => {
       setLoading(true);
@@ -93,7 +86,6 @@ function EditUserProfile({ onClose }) {
           console.error("Error fetching formatted address:", error);
           setErrorMessage("Could not fetch address for current location.");
         } finally {
-          // Reset the target index after attempting to fetch
           setTargetAddressIndexForGeo(null);
         }
       };
@@ -103,9 +95,7 @@ function EditUserProfile({ onClose }) {
       geoStatus === "error" ||
       geoStatus === "unsupported"
     ) {
-      // Handle errors or denial from the hook if needed (e.g., show message)
       if (targetAddressIndexForGeo !== null) {
-        // Check if we were trying to fetch
         setErrorMessage(
           `Could not get location: ${geoStatus}. Please enter manually.`
         );
@@ -114,8 +104,6 @@ function EditUserProfile({ onClose }) {
     }
     // This effect depends on the location object, its status, and the target index
   }, [location, geoStatus, targetAddressIndexForGeo]);
-
-  // --- Handlers ---
 
   const handleSectionClick = (section) => {
     setOpenSection(openSection === section ? null : section);
@@ -225,7 +213,6 @@ function EditUserProfile({ onClose }) {
     requestLocation();
   };
 
-  // --- Save Logic ---
   const handleSave = async () => {
     if (!originalProfile || !formData || isSaving) return;
 
@@ -267,9 +254,8 @@ function EditUserProfile({ onClose }) {
     setErrorMessage("");
 
     try {
-      // *** Ensure this endpoint exists and works in your backend ***
       const response = await axios.patch(
-        "http://localhost:8000/api/user/profile", // <--- VERIFY/ADJUST THIS ENDPOINT
+        "http://localhost:8000/api/user/profile",
         updates,
         { withCredentials: true }
       );
@@ -290,7 +276,6 @@ function EditUserProfile({ onClose }) {
     }
   };
 
-  // --- Render ---
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">

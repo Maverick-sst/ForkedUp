@@ -1,4 +1,3 @@
-// Backend/src/models/follow.model.js
 const mongoose = require("mongoose");
 
 const followSchema = new mongoose.Schema(

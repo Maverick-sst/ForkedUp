@@ -1,5 +1,3 @@
-// Frontend/src/pages/user/CartPage.jsx
-import React from "react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate, Link } from "react-router-dom";
 import { IoArrowBack, IoAdd } from "react-icons/io5"; // Using IoAdd for "Add more items"
@@ -14,7 +12,7 @@ function CartPage() {
   const groupedCartItems = cartItems.reduce((acc, item) => {
     if (!acc[item.foodPartnerId]) {
       acc[item.foodPartnerId] = {
-        foodPartnerName: "Restro-name", // Placeholder: You'll fetch this from an API later
+        foodPartnerName: "Restro-name",
         items: [],
       };
     }
@@ -33,9 +31,6 @@ function CartPage() {
 
   return (
     <div className="min-h-screen bg-brand-offwhite font-body pb-20">
-      {" "}
-      {/* pb-20 for fixed bottom button */}
-      {/* Top Bar - "cart" title and Back button */}
       <div className="bg-white shadow-sm sticky top-0 z-10 p-4 flex items-center justify-center">
         <button
           onClick={() => navigate(-1)}
@@ -51,7 +46,7 @@ function CartPage() {
           <div className="flex flex-col items-center justify-center pt-10">
             <p className="text-lg text-brand-gray mb-4">Your cart is empty!</p>
             <button
-              onClick={() => navigate("/feed")} // Or wherever reels/food list is
+              onClick={() => navigate("/feed")}
               className="px-6 py-2 bg-brand-orange text-white font-heading rounded-lg shadow hover:opacity-90"
             >
               Start Browsing
@@ -78,10 +73,10 @@ function CartPage() {
                       {partnerData.foodPartnerName}
                     </h2>
                   </Link>
-                  {/* Edit button for the whole partner's order, if needed */}
-                  {/* <button className="text-sm text-brand-orange flex items-center gap-1">
-                                    <FaEdit size={14} /> Edit
-                                </button> */}
+                  {/* Edit button for the whole partner's order*/}
+                  <button className="text-sm text-brand-orange flex items-center gap-1">
+                    <FaEdit size={14} /> Edit
+                  </button>
                 </div>
 
                 {/* Items from this partner */}
@@ -91,10 +86,10 @@ function CartPage() {
                       key={item.foodId}
                       className="flex gap-4 items-center border-b border-brand-gray-light pb-4 last:border-b-0 last:pb-0"
                     >
-                      {/* Video Preview / Image Placeholder */}
+                      {/* Video Preview */}
                       <div className="w-24 h-24 bg-gray-200 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-500 text-xs overflow-hidden">
-                        {/* You would typically display an image here: */}
                         {/* <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" /> */}
+                        <video src={item.videoUrl} />
                         Video Preview
                       </div>
 
@@ -145,9 +140,9 @@ function CartPage() {
                         </div>
                       </div>
                       {/* Edit button for individual item (optional, per wireframe) */}
-                      {/* <button className="text-sm text-brand-gray hover:text-brand-orange transition-colors self-start mt-1">
-                                            <FaEdit size={16} />
-                                        </button> */}
+                      <button className="text-sm text-brand-gray hover:text-brand-orange transition-colors self-start mt-1">
+                        <FaEdit size={16} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -197,7 +192,7 @@ function CartPage() {
           <FaUser size={24} className="text-black" />
         </Link>
       </div>
-     </div>
+    </div>
   );
 }
 

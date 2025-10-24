@@ -17,17 +17,14 @@ function SearchResultItem({ item }) {
       // quantity will be handled by context
     };
     addItemToCart(itemToAdd);
-    console.log(`${item.name} added to Cart`); // Use console log instead of alert
-    // alert(`${item.name} added to Cart`); // Avoid using alert
+    console.log(`${item.name} added to Cart`);
   };
 
   if (!item) return null;
 
-  // Determine the correct partner ID (it might be populated or just an ID string)
   const partnerId = item.foodPartner?._id || item.foodPartner;
 
   return (
-    // Link the whole item to the Reel viewer for that specific item
     <Link
       to={`/food-partner/${partnerId}/${item._id}`}
       className="flex gap-3 items-center p-3 bg-white rounded-lg shadow border border-gray-100 hover:shadow-md transition-shadow cursor-pointer" // Added cursor-pointer

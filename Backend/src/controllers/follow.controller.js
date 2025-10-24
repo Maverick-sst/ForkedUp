@@ -1,9 +1,7 @@
-// Backend/src/controllers/follow.controller.js
 const mongoose = require("mongoose");
 const Follow = require("../models/follow.model");
 const foodPartnerModel = require("../models/foodpartner.model");
 
-// --- Follow a Partner ---
 async function followPartner(req, res) {
   // User must be logged in (authMiddleware ensures req.user exists)
   if (!req.user || req.role !== "user") {
@@ -52,18 +50,15 @@ async function followPartner(req, res) {
   } catch (error) {
     // Handle potential unique index constraint violation gracefully
     if (error.code === 11000) {
-      return res
-        .status(409)
-        .json({
-          message: "Already following this partner (concurrent request).",
-        });
+      return res.status(409).json({
+        message: "Already following this partner (concurrent request).",
+      });
     }
     console.error("Error following partner:", error);
     res.status(500).json({ message: "Internal server error." });
   }
 }
 
-// --- Unfollow a Partner ---
 async function unfollowPartner(req, res) {
   if (!req.user || req.role !== "user") {
     return res.status(401).json({ message: "User authentication required." });
@@ -119,13 +114,10 @@ async function unfollowPartner(req, res) {
   }
 }
 
-// --- Check Follow Status ---
 async function getFollowStatus(req, res) {
   if (!req.user || req.role !== "user") {
     // Allow even unauthenticated users to check, but return false
     return res.status(200).json({ isFollowing: false });
-    // Or enforce login:
-    // return res.status(401).json({ message: "User authentication required." });
   }
 
   const userId = req.user._id;

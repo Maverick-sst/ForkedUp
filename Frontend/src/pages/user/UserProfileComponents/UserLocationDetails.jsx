@@ -1,4 +1,3 @@
-import React from "react";
 import {
   FaMapMarkerAlt,
   FaPlus,
@@ -6,10 +5,10 @@ import {
   FaStar,
   FaCrosshairs,
 } from "react-icons/fa";
-import AccordionSection from "../../../components/AccordionSection"; // Adjust path if needed
+import AccordionSection from "../../../components/AccordionSection";
 
 const UserLocationDetails = ({
-  addresses = [], // Default to empty array
+  addresses = [],
   defaultAddressIndex = 0,
   isOpen,
   onToggle,
@@ -17,8 +16,7 @@ const UserLocationDetails = ({
   onAddNewAddress,
   onRemoveAddress,
   onSetDefault,
-  onRequestLocation, // Receive the function to request location
-  // Add onEditAddress prop later if implementing edit functionality
+  onRequestLocation,
 }) => {
   return (
     <AccordionSection
@@ -44,7 +42,7 @@ const UserLocationDetails = ({
               <FaStar size={10} /> Default
             </span>
           )}
-          {/* --- ADDED: Use Current Location Button --- */}
+
           <p className="text-sm font-semibold text-brand-gray capitalize mb-1">
             {addr.label}
           </p>
@@ -52,11 +50,10 @@ const UserLocationDetails = ({
             {addr.location?.address?.formatted ||
               `${addr.location?.address?.building || ""}, ${
                 addr.location?.address?.street || ""
-              }`.replace(/^, |, $/g, "") || // Basic fallback display
+              }`.replace(/^, |, $/g, "") ||
               "Address details missing"}
           </p>
 
-          {/* Input fields for editing (simplified view for now, could be separate component) */}
           {/* Formatted Address */}
           <div className="relative">
             <input
@@ -134,7 +131,7 @@ const UserLocationDetails = ({
               >
                 <input
                   type="radio"
-                  name={`addresses.${index}.label`} // Correct name for nested state
+                  name={`addresses.${index}.label`}
                   value={label}
                   checked={addr.label === label}
                   onChange={onInputChange}
@@ -155,7 +152,7 @@ const UserLocationDetails = ({
                 Set as Default
               </button>
             ) : (
-              <span className="text-xs text-gray-400">Current Default</span> // Placeholder if already default
+              <span className="text-xs text-gray-400">Current Default</span>
             )}
             <button
               type="button"

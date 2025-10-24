@@ -1,5 +1,4 @@
-// Frontend/src/pages/user/CheckoutPage.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -11,12 +10,10 @@ import {
   FaSave,
 } from "react-icons/fa";
 
-function CheckoutPage() {
+export default function CheckoutPage() {
   const { cartItems, totalAmount, clearCart } = useCart();
   const navigate = useNavigate();
 
-  // --- State Management ---
-  // (States remain the same as previous version)
   const [userAddresses, setUserAddresses] = useState([]);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
   const [isUsingManualAddress, setIsUsingManualAddress] = useState(true);
@@ -33,10 +30,7 @@ function CheckoutPage() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // --- Effects ---
-  // (useEffect logic remains the same - fetch user data, handle empty cart)
   useEffect(() => {
-    // ... (fetch user details and local storage logic as before) ...
     const fetchUserDetailsAndLocalStorage = async () => {
       setIsLoading(true);
       setErrorMessage("");
@@ -79,13 +73,11 @@ function CheckoutPage() {
     };
 
     if (cartItems.length === 0 && !isLoading) {
-      // Initial check
       navigate("/cart", { replace: true });
       return;
     }
 
     fetchUserDetailsAndLocalStorage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -94,8 +86,6 @@ function CheckoutPage() {
     }
   }, [cartItems, isLoading, navigate]);
 
-  // --- Helper Functions ---
-  // (getFinalDeliveryLocationObject remains the same)
   const getFinalDeliveryLocationObject = () => {
     if (!isUsingManualAddress && userAddresses.length > selectedAddressIndex) {
       return userAddresses[selectedAddressIndex].location;
@@ -134,7 +124,6 @@ function CheckoutPage() {
     return null;
   };
 
-  // --- Event Handlers ---
   const handlePlaceOrder = async () => {
     setIsPlacingOrder(true);
     setErrorMessage("");
@@ -147,23 +136,21 @@ function CheckoutPage() {
       /* ... set error, return ... */
     }
 
-    // --- Step 1: Save New Address (API Call Implemented) ---
-    let addressToUseForOrder = finalLocationObject; // Use manual object by default
+    let addressToUseForOrder = finalLocationObject;
+
     if (isUsingManualAddress && saveNewAddress) {
       try {
         console.log("Attempting to save new address:", {
           label: newAddressLabel,
           location: finalLocationObject,
         });
-        // *** API CALL TO SAVE ADDRESS ***
+
         const saveResponse = await axios.patch(
-          "http://localhost:8000/api/user/addresses", // Your actual endpoint
+          "http://localhost:8000/api/user/addresses",
           { label: newAddressLabel, location: finalLocationObject },
           { withCredentials: true }
         );
         console.log("Address save successful:", saveResponse.data);
-        // Optional: Update addressToUseForOrder if the backend returns the saved object with _id etc.
-        // addressToUseForOrder = saveResponse.data.address.location;
       } catch (error) {
         console.error("Failed to save new address:", error);
         setErrorMessage(
@@ -172,20 +159,19 @@ function CheckoutPage() {
           }. Order not placed.`
         );
         setIsPlacingOrder(false);
-        return; // Stop order placement if saving failed
+        return;
       }
     }
 
-    // --- Step 2: Prepare Order Payload ---
+    // Prepare Order Payload
     const orderPayload = {
       items: cartItems.map((item) => ({
         food: item.foodId,
         quantity: item.quantity,
-        // **IMPORTANT**: Send price for reference, but backend MUST recalculate
-        price: item.price, // Send the price the user saw
+        price: item.price,
       })),
-      totalAmount: totalAmount, // Send the total the user saw
-      deliveryAddress: addressToUseForOrder, // Use the final address object
+      totalAmount: totalAmount,
+      deliveryAddress: addressToUseForOrder,
       paymentDetails: {
         method: paymentMethod,
         status: "pending",
@@ -197,12 +183,12 @@ function CheckoutPage() {
       /* ... set error, return ... */
     }
 
-    // --- Step 3: Place Order (API Call Implemented) ---
+    // Place Order
     try {
       console.log("Placing order with payload:", orderPayload);
-      // *** API CALL TO CREATE ORDER ***
+
       const orderResponse = await axios.post(
-        "http://localhost:8000/api/orders", // Your actual order creation endpoint
+        "http://localhost:8000/api/orders",
         orderPayload,
         { withCredentials: true }
       );
@@ -212,14 +198,13 @@ function CheckoutPage() {
       clearCart();
       const newOrderId = orderResponse.data.order?._id;
       if (newOrderId) {
-        navigate(`/order-success/${newOrderId}`); // Navigate with the ID
+        navigate(`/order-success/${newOrderId}`);
       } else {
         console.error("Order created but ID missing in response");
-        navigate("/"); // Fallback navigation
+        navigate("/");
       }
     } catch (error) {
       console.error("Order placement failed:", error);
-      // Display specific backend validation errors if available
       setErrorMessage(
         error.response?.data?.message ||
           "Failed to place order. Please try again."
@@ -229,7 +214,6 @@ function CheckoutPage() {
     }
   };
 
-  // --- Render Logic ---
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-brand-offwhite">
@@ -468,5 +452,3 @@ function CheckoutPage() {
     </div>
   );
 }
-
-export default CheckoutPage;

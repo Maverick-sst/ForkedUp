@@ -1,7 +1,7 @@
 import axios from "axios";
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Reel from "../../components/Reel"; // Ensure this path is correct
+import Reel from "../../components/Reel";
 
 function FoodPartnerReels() {
   const { id: foodPartnerId, foodId: initialFoodId } = useParams();
@@ -17,9 +17,9 @@ function FoodPartnerReels() {
   const [likedSet, setLikedSet] = useState(new Set());
   const [savedSet, setSavedSet] = useState(new Set());
 
-  const observer = useRef(); // For IntersectionObserver
+  const observer = useRef();
 
-  // --- API Call 1: Fetch interactions for the given videos ---
+  // API Call 1: Fetch interactions for the given videos
   const fetchInteractions = useCallback(async (videoItems) => {
     if (videoItems.length === 0) return;
     const videoIds = videoItems.map((v) => v._id).join(",");
@@ -44,21 +44,19 @@ function FoodPartnerReels() {
     } catch (err) {
       console.error("Failed to fetch interactions:", err);
     }
-  }, []); // This function is stable
+  }, []);
 
-  // --- API Call 2: Fetch paginated videos FOR THIS PARTNER ---
+  // API Call 2: Fetch paginated videos FOR THIS PARTNER
   const fetchPartnerVideos = useCallback(
     async (pageNum) => {
       setLoading(true);
       setError(null);
       try {
         const res = await axios.get(
-          // Use the partner-specific, paginated endpoint
           `http://localhost:8000/api/food-partner/${foodPartnerId}?page=${pageNum}&limit=5`,
           { withCredentials: true }
         );
 
-        // Note: The data structure is { foodReels, hasMore }
         const { foodReels, hasMore: newHasMore } = res.data;
 
         if (foodReels && foodReels.length > 0) {
@@ -91,9 +89,8 @@ function FoodPartnerReels() {
       }
     },
     [foodPartnerId, initialFoodId, fetchInteractions]
-  ); // Dependencies
+  );
 
-  // --- Initial Load ---
   useEffect(() => {
     // Clear old data and fetch page 1 on mount or when partnerId changes
     setVideos([]);
@@ -102,9 +99,8 @@ function FoodPartnerReels() {
     setPage(1);
     setHasMore(true);
     fetchPartnerVideos(1);
-  }, [foodPartnerId, fetchPartnerVideos]); // Run when partnerId changes
+  }, [foodPartnerId, fetchPartnerVideos]);
 
-  // --- Infinite Scroll Observer ---
   const lastVideoElementRef = useCallback(
     (node) => {
       if (loading) return;
@@ -126,7 +122,6 @@ function FoodPartnerReels() {
     [loading, hasMore, fetchPartnerVideos]
   );
 
-  // --- Optimistic Update Handlers ---
   const handleLikeToggle = useCallback((videoId, currentStatus) => {
     setLikedSet((prevLikedSet) => {
       const newSet = new Set(prevLikedSet);
@@ -145,18 +140,16 @@ function FoodPartnerReels() {
     });
   }, []);
 
-  // --- Prepare videos with up-to-date interaction status ---
   const videosWithStatus = videos.map((video) => ({
     ...video,
     likedByUser: likedSet.has(video._id),
     savedByUser: savedSet.has(video._id),
   }));
 
-  // --- Render Logic ---
   if (loading && page === 1) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-brand-offwhite">
-        <h1 className="text-xl font-heading text-brand-gray">
+        <h1 className="font-heading text-2xl text-brand-gray font-heading text-brand-gray">
           Loading reels...
         </h1>
       </div>
@@ -166,7 +159,9 @@ function FoodPartnerReels() {
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-brand-offwhite p-4 text-center">
-        <h1 className="text-xl font-heading text-red-500 mb-4">{error}</h1>
+        <h1 className="font-heading text-2xl text-brand-gray font-heading text-red-500 mb-4">
+          {error}
+        </h1>
         <button
           onClick={() => navigate(-1)}
           className="px-6 py-2 bg-brand-orange text-white rounded"
@@ -180,7 +175,7 @@ function FoodPartnerReels() {
   if (videos.length === 0 && !loading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-brand-offwhite p-4 text-center">
-        <h1 className="text-xl font-heading text-brand-gray">
+        <h1 className="font-heading text-2xl text-brand-gray font-heading text-brand-gray">
           No reels available from this partner.
         </h1>
         <button
@@ -199,7 +194,7 @@ function FoodPartnerReels() {
         listOfVideos={videosWithStatus}
         onLikeToggle={handleLikeToggle}
         onSaveToggle={handleSaveToggle}
-        lastVideoRef={lastVideoElementRef} // Pass the ref for the observer
+        lastVideoRef={lastVideoElementRef}
       />
       {loading && page > 1 && (
         <div className="text-center p-4 text-white">Loading more...</div>

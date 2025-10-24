@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-
-
 const UserRegistration = () => {
   const [name, setName] = useState("");
   const [userName, setUserName] = useState("");
@@ -11,9 +9,7 @@ const UserRegistration = () => {
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  const navigate=useNavigate();
-
-
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,14 +27,13 @@ const UserRegistration = () => {
         },
         {
           headers: { "Content-Type": "application/json" },
-          withCredentials:true
+          withCredentials: true,
         }
       );
 
       setSuccessMsg("Registration successful!");
-      console.log(response)
-      navigate("/feed")
-
+      console.log(response);
+      navigate("/feed");
     } catch (error) {
       if (error.response) {
         if (error.response.status === 409) {
@@ -59,11 +54,11 @@ const UserRegistration = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white">
+    <div className="flex items-center justify-center min-h-screen bg-brand-offwhite">
       <div className="w-full max-w-md p-8 space-y-6 border rounded shadow-md">
-        <h2 className="text-2xl font-bold text-center text-[#ef233c]">
+        <h1 className="font-heading text-2xl text-brand-gray">
           User Registration
-        </h2>
+        </h1>
 
         {successMsg && (
           <div className="p-2 mb-4 text-green-700 bg-green-100 border border-green-300 rounded">
@@ -83,7 +78,7 @@ const UserRegistration = () => {
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-[#ef233c]"
+              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-brand-orange"
               placeholder="Your Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -96,7 +91,7 @@ const UserRegistration = () => {
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-[#ef233c]"
+              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-brand-orange"
               placeholder="Your Username"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
@@ -109,7 +104,7 @@ const UserRegistration = () => {
             </label>
             <input
               type="email"
-              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-[#ef233c]"
+              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-brand-orange"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -122,7 +117,7 @@ const UserRegistration = () => {
             </label>
             <input
               type="password"
-              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-[#ef233c]"
+              className="w-full px-3 py-2 mt-1 border rounded focus:outline-none focus:ring-2 focus:ring-brand-orange"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -131,7 +126,8 @@ const UserRegistration = () => {
 
           <button
             type="submit"
-            className="w-full py-2 text-white bg-[#ef233c] rounded hover:bg-[#d01c33]"
+            className="w-full py-2 text-white bg-brand-orange rounded hover:bg-brand-peach hover:text-brand-gray
+"
           >
             Register
           </button>

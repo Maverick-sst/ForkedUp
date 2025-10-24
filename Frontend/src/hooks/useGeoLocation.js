@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 
 export function useGeoLocation() {
   const [location, setLocation] = useState(null);
-  const [status, setStatus] = useState("idle"); 
+  const [status, setStatus] = useState("idle");
   // idle | loading | ready | denied | error | unsupported
 
   const requestLocation = useCallback(() => {
@@ -20,7 +20,7 @@ export function useGeoLocation() {
           lng: pos.coords.longitude,
         };
         setLocation(coords);
-        console.log(coords)
+        console.log(coords);
         setStatus("ready");
       },
       (err) => {

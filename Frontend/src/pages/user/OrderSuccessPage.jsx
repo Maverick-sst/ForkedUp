@@ -1,5 +1,4 @@
-// Frontend/src/pages/user/OrderSuccessPage.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import {
@@ -11,10 +10,9 @@ import {
   FaBoxOpen,
   FaTimesCircle,
   FaUtensils,
-} from "react-icons/fa"; // Icons for status
+} from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
 
-// Helper function to map status to UI details
 const getStatusDetails = (status) => {
   switch (status) {
     case "pending":
@@ -37,8 +35,8 @@ const getStatusDetails = (status) => {
         icon: FaUtensils,
         color: "text-blue-500",
         step: 2,
-      }; // Using utensils icon
-    case "ready_for_pickup": // Optional
+      };
+    case "ready_for_pickup":
       return {
         text: "Ready for pickup",
         icon: FaBoxOpen,
@@ -85,7 +83,7 @@ const getStatusDetails = (status) => {
 
 const OrderStatusStep = ({ stepStatus, currentStep }) => {
   const isActive = stepStatus.step > 0 && currentStep >= stepStatus.step;
-  const isFinalRejectedCancelled = stepStatus.step === -1 && currentStep === -1; // Special case for rejected/cancelled
+  const isFinalRejectedCancelled = stepStatus.step === -1 && currentStep === -1;
 
   return (
     <div
@@ -127,24 +125,19 @@ const OrderStatusStep = ({ stepStatus, currentStep }) => {
 };
 
 function OrderSuccessPage() {
-  
-  const { orderId } = useParams(); // Get orderId from the URL
+  const { orderId } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isPolling, setIsPolling] = useState(false); // Tracks if polling is active
+  const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState(null);
 
-  // clearCart()
-
-  // --- Function to fetch order details ---
   const fetchOrderDetails = useCallback(
     async (isInitialLoad = false) => {
-      // Don't set loading true for polls, only for initial load
       if (isInitialLoad) {
         setIsLoading(true);
       }
-      setError(null); // Clear previous errors on fetch attempt
+      setError(null);
       console.log(
         `${
           isInitialLoad ? "Fetching initial" : "Polling for"
@@ -153,8 +146,8 @@ function OrderSuccessPage() {
 
       if (!orderId) {
         setError("No order ID provided.");
-        setIsLoading(false); // Ensure loading stops if no ID
-        return; // Stop fetching if no orderId
+        setIsLoading(false);
+        return;
       }
 
       try {
@@ -165,42 +158,40 @@ function OrderSuccessPage() {
         setOrder(response.data.order || null);
       } catch (err) {
         console.error("Failed to fetch order details:", err);
-        // Set error, but don't clear order data on polling error, maybe show subtle error indicator
+
         setError(
           err.response?.data?.message ||
             "Could not load order details. Retrying..."
         );
       } finally {
-        // Only set initial loading to false
         if (isInitialLoad) {
           setIsLoading(false);
         }
       }
     },
     [orderId]
-  ); // Now only depends on orderId
+  );
   const isFinalStatus =
     order?.orderStatus === "delivered" ||
     order?.orderStatus === "rejected" ||
     order?.orderStatus === "cancelled";
-  // --- Polling Logic ---
+  //Polling Logic
   useEffect(() => {
     // Only start polling AFTER initial load completes and if status is not final
     if (!isLoading && !isFinalStatus) {
-      setIsPolling(true); // Indicate polling is active
+      setIsPolling(true);
       console.log("Polling started...");
       const intervalId = setInterval(() => {
-        fetchOrderDetails(false); // Pass false for polling calls
-      }, 15000); // Poll every 15 seconds
+        fetchOrderDetails(false);
+      }, 15000);
 
-      // Cleanup function for this effect
       return () => {
         clearInterval(intervalId);
-        setIsPolling(false); // Indicate polling stopped
+        setIsPolling(false);
         console.log("Polling stopped.");
       };
     } else if (isFinalStatus) {
-      // If status becomes final, ensure polling stops if it was somehow still running
+      // ensure polling stops if it was somehow still running
       setIsPolling(false);
       console.log("Order reached final state, ensuring polling stops.");
     }
@@ -208,7 +199,6 @@ function OrderSuccessPage() {
     // This effect depends on the initial loading state and whether the status is final
   }, [isLoading, isFinalStatus, fetchOrderDetails]);
 
-  // --- Render Logic ---
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -220,7 +210,9 @@ function OrderSuccessPage() {
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4 text-center">
-        <h1 className="text-xl font-bold text-red-600 mb-4">Error</h1>
+        <h1 className="font-heading text-2xl text-brand-gray font-bold text-red-600 mb-4">
+          Error
+        </h1>
         <p className="text-red-500 mb-4">{error}</p>
         <button
           onClick={() => navigate("/")}
@@ -235,7 +227,7 @@ function OrderSuccessPage() {
   if (!order) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen p-4 text-center">
-        <h1 className="text-xl font-bold text-brand-gray mb-4">
+        <h1 className="font-heading text-2xl text-brand-gray font-bold text-brand-gray mb-4">
           Order Not Found
         </h1>
         <button
@@ -248,15 +240,14 @@ function OrderSuccessPage() {
     );
   }
 
-  // --- Get Current Status Details ---
   const currentStatusDetails = getStatusDetails(order.orderStatus);
   const orderSteps = [
     getStatusDetails("pending"),
-    getStatusDetails("accepted"), // Combines accepted/preparing visually
-    getStatusDetails("out_for_delivery"), // Combines ready/out_for_delivery visually
+    getStatusDetails("accepted"),
+    getStatusDetails("out_for_delivery"),
     getStatusDetails("delivered"),
   ];
-  // If rejected/cancelled, show only that status
+
   const displaySteps =
     currentStatusDetails.step === -1 ? [currentStatusDetails] : orderSteps;
 
@@ -268,7 +259,6 @@ function OrderSuccessPage() {
           onClick={() => navigate("/")}
           className="absolute left-4 text-brand-gray"
         >
-          {" "}
           {/* Navigate Home or to Orders List */}
           <IoArrowBack size={24} />
         </button>

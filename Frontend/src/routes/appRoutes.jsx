@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import UserLogin from "../pages/auth/UserLogin";
 import UserRegistration from "../pages/auth/UserRegistration";
@@ -32,8 +31,14 @@ const AppRoutes = () => {
         <Route path="/" element={<Home />} />
 
         <Route path="/profile" element={<Profile />} />
-        <Route path="/profile/reels/liked" element={<UserProfileReelsViewer/>}/>
-        <Route path="/profile/reels/saved" element={<UserProfileReelsViewer/>}/>
+        <Route
+          path="/profile/reels/liked"
+          element={<UserProfileReelsViewer />}
+        />
+        <Route
+          path="/profile/reels/saved"
+          element={<UserProfileReelsViewer />}
+        />
 
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />

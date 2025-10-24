@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaPen, FaClock } from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
 import axios from "axios";
 
-// Import all the modular child components
 import PersonalDetails from "../food-partner/partnerProfileComponents/PersonalDetails";
 import LocationDetails from "../food-partner/partnerProfileComponents/LocationDetails";
 import WorkingHours from "./partnerProfileComponents/WorkingHours";
@@ -17,8 +16,6 @@ function PartnerProfile() {
   const [openSection, setOpenSection] = useState("personal");
   const fileInputRef = useRef(null);
 
-  // --- LOGIC TO BE ADDED BY YOU ---
-  // This remains the single source of truth for the entire form.
   const [originalProfile, setOriginalProfile] = useState(null); // this is the original used for comparision for patch
   const [formData, setFormData] = useState(null); // this is what user will edit
   const [loading, setLoading] = useState(true);
@@ -28,10 +25,9 @@ function PartnerProfile() {
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:8000/api/me",
-          { withCredentials: true }
-        );
+        const response = await axios.get("http://localhost:8000/api/me", {
+          withCredentials: true,
+        });
         const profileData = response.data.foodPartner;
         // to handle react error for child location
         if (!profileData.location) {

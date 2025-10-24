@@ -1,1 +1,70 @@
 @import "tailwindcss";
+@theme {
+  /* Custom Color Palette */
+  --color-brand-orange: #FF7F50;
+  --color-brand-peach: #FFD1BA;
+  --color-brand-green: #7FB77E;
+  --color-brand-pink: #F6B6C3;
+  --color-brand-offwhite: #FFF9F5;
+  --color-brand-gray-light: #EDEDED;
+  --color-brand-gray: #6B6B6B;
+
+  /* Font Families */
+  --font-family-heading: 'Poppins', sans-serif;
+  --font-family-body: 'Inter', sans-serif;
+  --font-family-accent: 'Pacifico', cursive;
+}
+
+/* Apply body font by default */
+body {
+  font-family: var(--font-family-body);
+}
+
+/* Utility class for text shadow (used in some components) */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Smooth fade-in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-in-out;
+}
+
+/* Fade-in-out animation for play/pause icons */
+@keyframes fade-in-out {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+}
+
+.animate-fade-in-out {
+  animation: fade-in-out 0.5s ease-in-out;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

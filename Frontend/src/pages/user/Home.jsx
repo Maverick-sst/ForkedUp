@@ -1,13 +1,11 @@
-// Frontend/src/pages/user/Home.jsx
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import { Link } from "react-router-dom";
 import CartButton from "../../components/CartButton";
 import axios from "axios";
 import BottomNav from "../../components/BottomNav";
-import SearchResultItem from "../../components/SearchResultItem"; // Import the new component
-import _ from "lodash"; // Import lodash for debouncing
-
+import SearchResultItem from "../../components/SearchResultItem";
+import _ from "lodash";
 function Home() {
   const { location, status, requestLocation } = useGeoLocation();
   const [address, setAddress] = useState(() => {
@@ -23,7 +21,7 @@ function Home() {
     if (!address && status !== "denied") {
       requestLocation();
     }
-  }, [address, requestLocation, status]); // Added status dependency
+  }, [address, requestLocation, status]);
 
   useEffect(() => {
     if (status === "ready" && location) {
@@ -32,17 +30,16 @@ function Home() {
           `http://localhost:8000/api/location/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
         )
         .then((res) => {
-          if (!res?.data?.address) return; // Safer check
+          if (!res?.data?.address) return;
           setAddress(res.data.address);
           localStorage.setItem("userAddress", res.data.address);
         })
         .catch((err) => {
-          console.error("Error fetching address:", err); // Log error
+          console.error("Error fetching address:", err);
         });
     }
   }, [location, status]);
 
-  // --- Debounced Search Function ---
   const debouncedSearch = useCallback(
     _.debounce(async (query) => {
       if (!query.trim()) {
@@ -65,7 +62,7 @@ function Home() {
       } catch (err) {
         console.error("Global search failed:", err);
         setSearchError("Search failed. Please try again.");
-        setSearchResults([]); // Clear results on error
+        setSearchResults([]);
       } finally {
         setIsSearching(false);
       }
@@ -73,7 +70,6 @@ function Home() {
     []
   );
 
-  // --- Handle Search Input Change ---
   const handleSearchChange = (e) => {
     const newSearchTerm = e.target.value;
     setSearchTerm(newSearchTerm);
@@ -81,17 +77,16 @@ function Home() {
   };
 
   return (
-    <div className="relative h-screen w-full bg-white text-black overflow-hidden">
+    <div className="relative h-screen w-full bg-brand-offwhite text-black overflow-hidden">
       {/* Background overlay video */}
       <video
-        src="/sample-bg.mp4" // replace with actual video path
+        src="/sample-bg.mp4"
         autoPlay
         muted
         loop
         className="absolute inset-0 w-full h-full object-cover"
       />
 
-      {/* Overlay container */}
       <div className="relative z-10 flex flex-col h-full">
         {/* Top bar: location + user profile */}
         <div className="flex justify-between items-center px-4 py-4 bg-white/70 backdrop-blur-md rounded-b-xl shadow">
@@ -103,16 +98,14 @@ function Home() {
               : status === "denied"
               ? "Location blocked"
               : "Set location"}
-            {status !== "ready" &&
-              status !== "loading" &&
-              !address && ( // Show button only if needed
-                <button
-                  onClick={requestLocation}
-                  className="ml-2 px-2 py-0.5 rounded text-xs bg-brand-orange text-white"
-                >
-                  Detect
-                </button>
-              )}
+            {status !== "ready" && status !== "loading" && !address && (
+              <button
+                onClick={requestLocation}
+                className="ml-2 px-2 py-0.5 rounded text-xs bg-brand-orange text-white"
+              >
+                Detect
+              </button>
+            )}
           </div>
           <Link to="/profile">Hey, Username</Link>{" "}
           {/* TODO: Fetch actual username */}

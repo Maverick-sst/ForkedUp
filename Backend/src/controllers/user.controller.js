@@ -148,7 +148,6 @@ async function updateUserProfile(req, res) {
   }
 }
 
-// --- NEW: Update an Existing Address by Index ---
 async function updateAddress(req, res) {
   if (!req.user || req.role !== "user") {
     return res.status(401).json({ message: "Unauthorized." });
@@ -168,11 +167,9 @@ async function updateAddress(req, res) {
     !location.address ||
     (!location.address.formatted && !location.address.street)
   ) {
-    return res
-      .status(400)
-      .json({
-        message: "Invalid address data. Label and location details required.",
-      });
+    return res.status(400).json({
+      message: "Invalid address data. Label and location details required.",
+    });
   }
   if (!["home", "work", "other"].includes(label)) {
     return res.status(400).json({ message: "Invalid address label." });
@@ -222,7 +219,6 @@ async function updateAddress(req, res) {
   }
 }
 
-// --- NEW: Delete an Address by Index ---
 async function deleteAddress(req, res) {
   if (!req.user || req.role !== "user") {
     return res.status(401).json({ message: "Unauthorized." });
@@ -278,7 +274,6 @@ async function deleteAddress(req, res) {
   }
 }
 
-// --- NEW: Set Default Address ---
 async function setDefaultAddress(req, res) {
   if (!req.user || req.role !== "user") {
     return res.status(401).json({ message: "Unauthorized." });
@@ -320,11 +315,9 @@ async function setDefaultAddress(req, res) {
     });
   } catch (error) {
     console.error("Error setting default address:", error);
-    return res
-      .status(500)
-      .json({
-        message: "Internal server error while setting default address.",
-      });
+    return res.status(500).json({
+      message: "Internal server error while setting default address.",
+    });
   }
 }
 
