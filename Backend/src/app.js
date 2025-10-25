@@ -23,6 +23,11 @@ app.use(
   })
 );
 
+app.get('/healthcheck', (req, res) => {
+  console.log("Health check ping received at:", new Date().toISOString()); 
+  res.status(200).json({ status: 'ok', message: 'Backend is alive!' });
+});
+
 app.use("/api/auth/", authRoutes);
 app.use("/api/me", detailsRoutes);
 app.use("/api/upload/", uploadRoutes);

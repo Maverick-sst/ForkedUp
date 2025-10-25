@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { useNotification } from "../../components/Notification";
-
+import { Eye, EyeOff } from "lucide-react";
 const logo =
   "https://ik.imagekit.io/eczrgfwzq/forkedUp_logo2.png?updatedAt=1761337612355";
 
@@ -14,7 +14,7 @@ const FoodPartnerRegistration = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-
+  const [showPassword, setShowPassword] = useState(false);
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -79,15 +79,15 @@ const FoodPartnerRegistration = () => {
       // **KEY FIX**: Wait for cookies to settle, then navigate
       // Don't set isLoading to false - let the navigation happen
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      
+
       // Navigate immediately after delay - component will unmount
       navigate("/food-partner/login");
-      
+
       // Note: No need to set isLoading(false) here as component unmounts
     } catch (error) {
       // **ONLY set isLoading to false on error**
       setIsLoading(false);
-      
+
       const message =
         error.response?.data?.message ||
         (error.response?.status === 409
@@ -155,19 +155,27 @@ const FoodPartnerRegistration = () => {
             />
           </div>
 
-          {/* Password Input */}
-          <div>
+          {/* Password Input with Toggle */}
+          <div className="relative">
             <label className="block text-sm font-medium text-brand-gray mb-1.5">
               Password
             </label>
             <input
-              type="password"
-              className="w-full px-4 py-2.5 bg-gray-50 border border-brand-gray-light rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/50 transition duration-200"
+              type={showPassword ? "text" : "password"} // Toggle type based on state
+              className="w-full px-4 py-2.5 pr-10 bg-gray-50 border border-brand-gray-light rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/50 transition duration-200" // Added pr-10 for icon space
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
             />
+            <button
+              type="button" // Important: Prevent form submission
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-[-4px] text-brand-gray hover:text-brand-orange focus:outline-none" // Position the button
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
           {/* Submit Button */}

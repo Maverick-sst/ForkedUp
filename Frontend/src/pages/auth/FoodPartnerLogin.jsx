@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { useNotification } from "../../components/Notification";
-
+import { Eye, EyeOff } from "lucide-react";
 const logo =
   "https://ik.imagekit.io/eczrgfwzq/forkedUp_logo2.png?updatedAt=1761337612355";
 
 const FoodPartnerLogin = () => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { showNotification } = useNotification();
@@ -94,19 +95,27 @@ const FoodPartnerLogin = () => {
             />
           </div>
 
-          {/* Password Input */}
-          <div>
+          {/* Password Input with Toggle */}
+          <div className="relative">
             <label className="block text-sm font-medium text-brand-gray mb-1.5">
               Password
             </label>
             <input
-              type="password"
-              className="w-full px-4 py-2.5 bg-gray-50 border border-brand-gray-light rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/50 transition duration-200"
+              type={showPassword ? "text" : "password"} // Toggle type based on state
+              className="w-full px-4 py-2.5 pr-10 bg-gray-50 border border-brand-gray-light rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/50 transition duration-200" // Added pr-10 for icon space
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
             />
+            <button
+              type="button" // Important: Prevent form submission
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-[-4px] text-brand-gray hover:text-brand-orange focus:outline-none" // Position the button
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
           {/* Submit Button */}

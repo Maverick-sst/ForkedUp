@@ -16,7 +16,7 @@ import CartPage from "../pages/user/CartPage";
 import CheckoutPage from "../pages/user/CheckoutPage";
 import OrderSuccessPage from "../pages/user/OrderSuccessPage";
 import UserProfileReelsViewer from "../components/UserProfileReelsViewer";
-
+import NotFoundPage from "../pages/NotFoundPage";
 const AppRoutes = () => {
   return (
     <Router>
@@ -53,6 +53,7 @@ const AppRoutes = () => {
           element={<FoodPartnerReels />}
         />
         <Route path="/food-partner/profile/edit" element={<PartnerProfile />} />
+         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );
