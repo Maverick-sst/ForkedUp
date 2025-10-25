@@ -47,8 +47,12 @@ const FoodPartnerProfile = () => {
     setFollowerCount(0);
 
     const fetchInitialData = async () => {
+      const minLoadingTime = new Promise((resolve) =>
+        setTimeout(resolve, 1800)
+      );
       try {
         // Fetch profile and follow status concurrently
+
         const [profileResponse, followStatusResponse] = await Promise.all([
           axios.get(`http://localhost:8000/api/food-partner/${partnerId}`, {
             withCredentials: true,
@@ -78,6 +82,7 @@ const FoodPartnerProfile = () => {
         setProfile(null);
         setVideos([]);
       } finally {
+        await minLoadingTime;
         setLoading(false);
         setLoadingFollowStatus(false);
       }
@@ -244,7 +249,12 @@ const FoodPartnerProfile = () => {
   }
 
   if (loading) {
-    return <LoadingComponent message="Loading partner details..." />;
+    return (
+      <LoadingComponent
+        message="Loading partner details..."
+        minDuration={1800}
+      />
+    );
   }
   if (!profile) {
     return (
@@ -255,8 +265,8 @@ const FoodPartnerProfile = () => {
   }
 
   return (
-    <div className="bg-white min-h-screen p-4 font-sans pb-24">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white h-screen overflow-y-auto p-4 font-sans pb-24 scrollbar-hide">
+      <div className="flex-grow items-center justify-between mb-6">
         {/* Profile Pic and Restro Name */}
         <div className="flex items-center space-x-5">
           {" "}
@@ -354,7 +364,7 @@ const FoodPartnerProfile = () => {
             setSearchResults([]);
             setSearchError("");
           }}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-red-500"
+className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-red-500"
         >
           <FaTimes />
         </button>

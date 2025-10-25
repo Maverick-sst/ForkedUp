@@ -10,7 +10,8 @@ import {
 } from "react-icons/fa";
 import ProgressRing from "../../components/ProgressRing";
 import axios from "axios";
-import LoadingComponent from "../../components/LoadingComponent"; // Adjust path if needed
+import LoadingComponent from "../../components/LoadingComponent";
+import { handleLogout } from "../../utilities/authUtils";
 // --- Onboarding View (Remains the same) ---
 const OnboardingView = () => {
   const profileCompletion = 25;
@@ -132,9 +133,12 @@ const OperationalDashboard = () => {
         );
       case "out_for_delivery":
         return (
-          <span className="text-sm font-medium text-purple-600">
-            Currently Delivering...
-          </span>
+          <button
+            onClick={() => handleUpdateStatus(order._id, "delivered")}
+            className="px-4 py-1.5 text-sm font-semibold text-white bg-brand-green rounded-lg hover:opacity-90 transition-opacity flex items-center gap-1"
+          >
+            <FaCheckCircle /> Mark as Delivered
+          </button>
         );
       default:
         return null;
@@ -387,14 +391,22 @@ function Dashboard() {
   const [isProfileComplete, setIsProfileComplete] = useState(null);
   const [username, setUsername] = useState("Partner");
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const navigate = useNavigate();
+  // In Dashboard.jsx, find the fetchProfile useEffect and update it:
 
   useEffect(() => {
     const fetchProfile = async () => {
       setLoadingProfile(true);
+
+      const minLoadingTime = new Promise((resolve) =>
+        setTimeout(resolve, 2000)
+      );
+
       try {
         const response = await axios.get("http://localhost:8000/api/me", {
           withCredentials: true,
         });
+
         if (response.data?.foodPartner) {
           const partner = response.data.foodPartner;
           setUsername(partner.userName || "Partner");
@@ -412,23 +424,51 @@ function Dashboard() {
         console.error("Failed to fetch partner profile:", error);
         setIsProfileComplete(false);
       } finally {
+        await minLoadingTime;
         setLoadingProfile(false);
       }
     };
     fetchProfile();
   }, []);
 
+  // Then update the loading component call:
   if (loadingProfile || isProfileComplete === null) {
-    return <LoadingComponent message="Loading Dashboard..." />;
+    return (
+      <LoadingComponent message="Loading Dashboard..." minDuration={2000} />
+    );
   }
   return (
     <div className="flex flex-col min-h-screen bg-brand-offwhite p-6 font-body pb-30 overflow-y-auto scroll-hide">
+      {/* Logout Button */}
+      <button
+        onClick={() => {
+          if (window.confirm("Are you sure you want to logout?")) {
+            handleLogout(navigate);
+          }
+        }}
+        className="absolute top-3 right-3 z-30 px-3 py-1 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition-colors flex items-center gap-1 text-xs font-medium"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+          />
+        </svg>
+      </button>
+
       <h1 className="text-3xl font-heading text-brand-gray mb-8 text-center">
         Hello, {username}!
       </h1>
 
       <div className="flex flex-col items-center w-full">
-        {/* Render based on fetched profile completion status */}
         {isProfileComplete ? <OperationalDashboard /> : <OnboardingView />}
       </div>
     </div>

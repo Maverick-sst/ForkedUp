@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Reel from "../../components/Reel";
 import LoadingComponent from "../../components/LoadingComponent";
+
 function FoodPartnerReels() {
   const { id: foodPartnerId, foodId: initialFoodId } = useParams();
   const navigate = useNavigate();
@@ -51,6 +52,13 @@ function FoodPartnerReels() {
     async (pageNum) => {
       setLoading(true);
       setError(null);
+
+      // **NEW: Enforce minimum loading time ONLY for initial page load**
+      const minLoadingTime =
+        pageNum === 1
+          ? new Promise((resolve) => setTimeout(resolve, 2000))
+          : Promise.resolve(); // No delay for subsequent pages
+
       try {
         const res = await axios.get(
           `http://localhost:8000/api/food-partner/${foodPartnerId}?page=${pageNum}&limit=5`,
@@ -85,6 +93,8 @@ function FoodPartnerReels() {
         console.error("Failed to fetch partner videos:", err);
         setError("Could not load reels. Please try again.");
       } finally {
+        // **NEW: Wait for minimum loading time before hiding loader**
+        await minLoadingTime;
         setLoading(false);
       }
     },
@@ -146,7 +156,12 @@ function FoodPartnerReels() {
     savedByUser: savedSet.has(video._id),
   }));
 
-  <LoadingComponent message="Loading Feed..." />;
+  // **NEW: Show loading component with minimum duration for initial load**
+  if (loading && page === 1) {
+    return (
+      <LoadingComponent message="Loading Partner Reels..." minDuration={2000} />
+    );
+  }
 
   if (error) {
     return (

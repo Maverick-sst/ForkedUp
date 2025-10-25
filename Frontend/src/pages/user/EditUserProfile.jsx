@@ -9,7 +9,7 @@ import { useGeoLocation } from "../../hooks/useGeoLocation";
 import updateNestedState from "../../utilities/updateNestedState";
 import { getObjectDiff } from "../../utilities/dataDifference";
 import { useNotification } from "../../components/Notification";
-import LoadingComponent from "../../components/LoadingComponent"; 
+import LoadingComponent from "../../components/LoadingComponent";
 // This component receives an `onClose` function prop from Profile.jsx
 function EditUserProfile({ onClose }) {
   const [openSection, setOpenSection] = useState("personal");
@@ -26,6 +26,9 @@ function EditUserProfile({ onClose }) {
     useState(null);
   useEffect(() => {
     const fetchProfileData = async () => {
+      const minLoadingTime = new Promise((resolve) =>
+        setTimeout(resolve, 1500)
+      );
       setLoading(true);
       setErrorMessage("");
       try {
@@ -51,6 +54,7 @@ function EditUserProfile({ onClose }) {
         console.error("Failed to fetch user profile data:", error);
         setErrorMessage("Could not load profile. Please try again.");
       } finally {
+        await minLoadingTime;
         setLoading(false);
       }
     };
@@ -280,7 +284,7 @@ function EditUserProfile({ onClose }) {
   };
 
   if (loading) {
-    return <LoadingComponent message="Loading Profile..." />;
+    return <LoadingComponent message="Loading Profile..." minDuration={1500} />;
   }
 
   if (!formData) {

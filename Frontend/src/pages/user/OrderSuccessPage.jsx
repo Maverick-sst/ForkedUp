@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import LoadingComponent from "../../components/LoadingComponent"; 
+import LoadingComponent from "../../components/LoadingComponent";
+import RatingPopup from "../../components/RatingPopup"; 
+import { useNotification } from "../../components/Notification";
 import {
   FaClipboardCheck,
   FaRegClock,
@@ -11,6 +13,7 @@ import {
   FaBoxOpen,
   FaTimesCircle,
   FaUtensils,
+  // FaStar and FaTimes removed from here
 } from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
 
@@ -125,6 +128,8 @@ const OrderStatusStep = ({ stepStatus, currentStep }) => {
   );
 };
 
+// --- RATING POPUP COMPONENT REMOVED FROM HERE ---
+
 function OrderSuccessPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -132,9 +137,19 @@ function OrderSuccessPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState(null);
+  const {showNotification} = useNotification();
+  // --- State for Rating ---
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
+  const [hasRated, setHasRated] = useState(false); // Prevents re-showing
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [ratingError, setRatingError] = useState(null);
+  // ----------------------------
 
   const fetchOrderDetails = useCallback(
     async (isInitialLoad = false) => {
+      const minLoadingTime = new Promise((resolve) =>
+        setTimeout(resolve, 2500)
+      );
       if (isInitialLoad) {
         setIsLoading(true);
       }
@@ -166,6 +181,7 @@ function OrderSuccessPage() {
         );
       } finally {
         if (isInitialLoad) {
+          await minLoadingTime;
           setIsLoading(false);
         }
       }
@@ -182,9 +198,9 @@ function OrderSuccessPage() {
     order?.orderStatus === "delivered" ||
     order?.orderStatus === "rejected" ||
     order?.orderStatus === "cancelled";
+
   //Polling Logic
   useEffect(() => {
-    // Only start polling AFTER initial load completes and if status is not final
     if (!isLoading && !isFinalStatus) {
       setIsPolling(true);
       console.log("Polling started...");
@@ -198,16 +214,58 @@ function OrderSuccessPage() {
         console.log("Polling stopped.");
       };
     } else if (isFinalStatus) {
-      // ensure polling stops if it was somehow still running
       setIsPolling(false);
       console.log("Order reached final state, ensuring polling stops.");
     }
-
-    // This effect depends on the initial loading state and whether the status is final
   }, [isLoading, isFinalStatus, fetchOrderDetails]);
 
+  // --- Effect to Show Rating Popup ---
+  useEffect(() => {
+    if (order?.orderStatus === "delivered" && !hasRated) {
+      const timer = setTimeout(() => {
+        setShowRatingPopup(true);
+      }, 2000); // Wait 2s after delivery to show
+
+      return () => clearTimeout(timer);
+    }
+  }, [order?.orderStatus, hasRated]);
+
+  // --- Handler for Rating Submission ---
+  const handleRatingSubmit = async (rating, comment) => {
+    setIsSubmittingRating(true);
+    setRatingError(null);
+    try {
+      const partnerId = order?.foodPartner?._id;
+      if (!partnerId) {
+        throw new Error("Food partner ID not found on the order.");
+      }
+
+      await axios.post(
+        `http://localhost:8000/api/ratings/${partnerId}`,
+        { rating, comment },
+        { withCredentials: true }
+      );
+
+      // Success
+      setShowRatingPopup(false);
+      setHasRated(true); // Mark as rated to prevent re-showing
+      // alert("Thank you for your rating!"); // Simple success feedback
+      showNotification("Thank you for your rating!")
+    } catch (err) {
+      console.error("Failed to submit rating:", err);
+      setRatingError(
+        err.response?.data?.message ||
+          "Could not submit rating. Please try again."
+      );
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
   if (isLoading) {
-    return <LoadingComponent message="Loading Order Details..." />;
+    return (
+      <LoadingComponent message="Loading Order Details..." minDuration={2500} />
+    );
   }
 
   if (error) {
@@ -262,7 +320,6 @@ function OrderSuccessPage() {
           onClick={() => navigate("/")}
           className="absolute left-4 text-brand-gray"
         >
-          {/* Navigate Home or to Orders List */}
           <IoArrowBack size={24} />
         </button>
         <h1 className="font-heading text-xl text-brand-gray">Order Tracking</h1>
@@ -271,7 +328,7 @@ function OrderSuccessPage() {
       {/* Scrollable Content Area */}
       <div className="flex-grow overflow-y-auto scrollbar-hide p-4 space-y-5">
         {/* Initial Success Message */}
-        {order.orderStatus === "pending" && ( // Show only initially
+        {order.orderStatus === "pending" && (
           <div className="bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-center shadow animate-fade-in mb-5">
             <FaClipboardCheck className="inline-block mr-2" size={20} />
             <span className="font-semibold">Order Placed Successfully!</span>
@@ -293,7 +350,7 @@ function OrderSuccessPage() {
           ))}
         </div>
 
-        {/* Order Summary (Optional but helpful) */}
+        {/* Order Summary */}
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="font-heading text-lg text-brand-gray mb-3 border-b pb-2">
             Order Summary
@@ -333,6 +390,19 @@ function OrderSuccessPage() {
           </Link>
         </div>
       </div>
+
+      {/* --- Rating Popup Render (Now uses the imported component) --- */}
+      <RatingPopup
+        show={showRatingPopup}
+        onClose={() => {
+          setShowRatingPopup(false);
+          setHasRated(true); // Mark as "dealt with" even if closed
+        }}
+        onSubmit={handleRatingSubmit}
+        partnerName={order.foodPartner?.name || "this partner"}
+        isSubmitting={isSubmittingRating}
+        error={ratingError}
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { Clock, CheckCircle, XCircle } from "lucide-react";
-import LoadingComponent from "./LoadingComponent"; 
+import LoadingComponent from "./LoadingComponent";
 const formatDate = (dateString) => {
   if (!dateString) return "";
   const options = {
@@ -61,6 +61,9 @@ function OrderSummary() {
 
   useEffect(() => {
     const fetchUserOrders = async () => {
+      const minLoadingTime = new Promise((resolve) =>
+        setTimeout(resolve, 1500)
+      );
       setLoadingOrders(true);
       setErrorOrders(null);
       try {
@@ -75,6 +78,7 @@ function OrderSummary() {
         console.error("Error fetching user orders:", err);
         setErrorOrders(err.response?.data?.message || "Could not load orders.");
       } finally {
+        await minLoadingTime;
         setLoadingOrders(false);
       }
     };
@@ -83,7 +87,7 @@ function OrderSummary() {
   }, []);
 
   if (loadingOrders) {
-    return <LoadingComponent message="Loading orders..." />;
+    return <LoadingComponent message="Loading orders..." minDuration={1500} />;
   }
 
   if (errorOrders) {

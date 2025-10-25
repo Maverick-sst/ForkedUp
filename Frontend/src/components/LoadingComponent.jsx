@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 
-const LoadingComponent = ({ message }) => {
+const LoadingComponent = ({ message, minDuration = 2000 }) => {
   const [currentQuote, setCurrentQuote] = useState(0);
+  const [isMinDurationMet, setIsMinDurationMet] = useState(false);
 
   // Quotes in Kannada and English for Bengaluru context
   const bangaloreQuotes = [
@@ -17,20 +18,28 @@ const LoadingComponent = ({ message }) => {
     "Tindi ready madtidini, cool!", // Making snacks ready, cool!
   ];
 
+  // Enforce minimum display duration
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMinDurationMet(true);
+    }, minDuration);
+
+    return () => clearTimeout(timer);
+  }, [minDuration]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentQuote((prev) => (prev + 1) % bangaloreQuotes.length);
     }, 3000); // Cycle quotes every 3 seconds
 
-    return () => clearInterval(interval); // Cleanup interval on unmount
-  }, [bangaloreQuotes.length]); // Rerun effect if number of quotes changes
+    return () => clearInterval(interval);
+  }, [bangaloreQuotes.length]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-brand-offwhite p-6 text-brand-gray"> {/* Use theme colors */}
+    <div className="flex flex-col items-center justify-center min-h-screen bg-brand-offwhite p-6 text-brand-gray">
       {/* Animated Food Icons */}
       <div className="relative mb-8">
         <div className="flex gap-4 items-center">
-          {/* Using text-brand-orange for consistency */}
           <span className="text-6xl text-brand-orange animate-bounce" style={{ animationDelay: '0ms' }}>🍔</span>
           <span className="text-6xl text-brand-orange animate-bounce" style={{ animationDelay: '200ms' }}>🍕</span>
           <span className="text-6xl text-brand-orange animate-bounce" style={{ animationDelay: '400ms' }}>🍜</span>
@@ -39,24 +48,21 @@ const LoadingComponent = ({ message }) => {
 
       {/* Loading Spinner */}
       <div className="relative mb-6">
-        {/* Changed border to transparent, kept orange top border */}
-        <div className="w-16 h-16 border-4 border-transparent border-t-brand-orange rounded-full animate-spin"></div> {/* Use theme color */}
-        {/* Center element remains the same */}
+        <div className="w-16 h-16 border-4 border-transparent border-t-brand-orange rounded-full animate-spin"></div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-8 h-8 bg-brand-orange rounded-full animate-pulse"></div> {/* Use theme color */}
+          <div className="w-8 h-8 bg-brand-orange rounded-full animate-pulse"></div>
         </div>
       </div>
 
       {/* Loading Message */}
       {message && (
-        <div className="text-xl font-heading mb-4"> {/* Use theme font */}
+        <div className="text-xl font-heading mb-4">
           {message}
         </div>
       )}
 
       {/* Bangalore Quote */}
       <div className="text-center max-w-md">
-        {/* Key added for transition, use theme color */}
         <div key={currentQuote} className="text-brand-orange text-lg font-medium italic transition-opacity duration-500 ease-in-out animate-fade-in font-body">
           "{bangaloreQuotes[currentQuote]}"
         </div>
@@ -64,13 +70,10 @@ const LoadingComponent = ({ message }) => {
 
       {/* Loading Dots */}
       <div className="flex gap-2 mt-6">
-        {/* Use theme color */}
         <div className="w-3 h-3 bg-brand-orange rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
         <div className="w-3 h-3 bg-brand-orange rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
         <div className="w-3 h-3 bg-brand-orange rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
       </div>
-
-      
     </div>
   );
 };

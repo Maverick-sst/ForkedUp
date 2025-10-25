@@ -75,8 +75,19 @@ const UserRegistration = () => {
         "success"
       );
       console.log(response);
-      navigate("/feed");
+      
+      // **KEY FIX**: Wait for cookies to settle, then navigate
+      // Don't set isLoading to false - let the navigation happen
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      // Navigate immediately after delay - component will unmount
+      navigate("/user/login");
+      
+      // Note: No need to set isLoading(false) here as component unmounts
     } catch (error) {
+      // **ONLY set isLoading to false on error**
+      setIsLoading(false);
+      
       const message =
         error.response?.data?.message ||
         (error.response?.status === 409
@@ -84,9 +95,8 @@ const UserRegistration = () => {
           : "Registration failed. Please try again later.");
       showNotification(message, "error");
       console.error("Registration error:", error.response || error);
-    } finally {
-      setIsLoading(false);
     }
+    // **REMOVED finally block** - it was causing the issue
   };
 
   return (

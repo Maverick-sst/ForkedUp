@@ -25,6 +25,7 @@ function PartnerProfile() {
   const { location, requestLocation } = useGeoLocation();
   useEffect(() => {
     const fetchProfileData = async () => {
+      const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1800));
       try {
         const response = await axios.get("http://localhost:8000/api/me", {
           withCredentials: true,
@@ -60,6 +61,7 @@ function PartnerProfile() {
       } catch (error) {
         console.error("Failed to fetch profile data:", error);
       } finally {
+        await minLoadingTime;
         setLoading(false);
       }
     };
@@ -208,7 +210,7 @@ function PartnerProfile() {
   };
 
   if (loading) {
-    return <LoadingComponent message="Loading Profile..." />;
+    return <LoadingComponent message="Loading Profile..." minDuration={1800}/>;
   }
 
   if (!formData) {

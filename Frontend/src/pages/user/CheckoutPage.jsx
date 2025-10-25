@@ -13,7 +13,7 @@ import {
 } from "react-icons/fa";
 import { useGeoLocation } from "../../hooks/useGeoLocation";
 import { useNotification } from "../../components/Notification";
-import LoadingComponent from "../../components/LoadingComponent"; 
+import LoadingComponent from "../../components/LoadingComponent";
 export default function CheckoutPage() {
   const { cartItems, totalAmount, clearCart } = useCart();
   const navigate = useNavigate();
@@ -41,6 +41,9 @@ export default function CheckoutPage() {
   const { showNotification } = useNotification();
   useEffect(() => {
     const fetchUserDetailsAndLocalStorage = async () => {
+      const minLoadingTime = new Promise((resolve) =>
+        setTimeout(resolve, 1500)
+      );
       setIsLoading(true);
       setErrorMessage("");
       let fetchedAddresses = [];
@@ -81,6 +84,7 @@ export default function CheckoutPage() {
           setManualFormattedAddress(storedAddress);
         }
       }
+      await minLoadingTime;
       setIsLoading(false);
     };
 
@@ -352,7 +356,9 @@ export default function CheckoutPage() {
     }
   };
   if (isLoading) {
-    return <LoadingComponent message="Loading Checkout..." />;
+    return (
+      <LoadingComponent message="Loading Checkout..." minDuration={1500} />
+    );
   }
 
   return (

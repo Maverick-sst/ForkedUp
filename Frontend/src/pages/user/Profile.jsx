@@ -6,7 +6,8 @@ import CartButton from "../../components/CartButton";
 import BottomNav from "../../components/BottomNav";
 import EditUserProfile from "./EditUserProfile";
 import OrderSummary from "../../components/OrderSummary";
-import LoadingComponent from "../../components/LoadingComponent"; 
+import LoadingComponent from "../../components/LoadingComponent";
+import { handleLogout } from "../../utilities/authUtils";
 function Profile() {
   const [activeBtn, setActiveBtn] = useState("liked");
   const [likedReels, setLikedReels] = useState([]);
@@ -22,6 +23,7 @@ function Profile() {
 
   useEffect(() => {
     setLoadingUser(true);
+    const minLoadingTime = new Promise((resolve) => setTimeout(resolve, 1800));
     axios
       .get("http://localhost:8000/api/me", { withCredentials: true })
       .then((response) => {
@@ -39,7 +41,9 @@ function Profile() {
         setUserData({ userName: "username", profilePhoto: null });
       })
       .finally(() => {
-        setLoadingUser(false);
+        minLoadingTime.then(() => {
+          setLoadingUser(false);
+        });
       });
   }, []);
 
@@ -106,7 +110,7 @@ function Profile() {
     else videoRefs.current.delete(id);
   };
   if (loadingUser) {
-    return <LoadingComponent message="Loading Profile..." />;
+    return <LoadingComponent message="Loading Profile..." minDuration={1800} />;
   }
   if (showEditPanel) {
     return <EditUserProfile onClose={() => setShowEditPanel(false)} />;
@@ -122,6 +126,32 @@ function Profile() {
       >
         <ArrowLeft size={28} />
       </button>
+
+      <button
+        onClick={() => {
+          if (window.confirm("Are you sure you want to logout?")) {
+            handleLogout(navigate);
+          }
+        }}
+        className="absolute top-7 right-16 z-20 text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors"
+        aria-label="Logout"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-7 w-7"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+          />
+        </svg>
+      </button>
+
       <button
         onClick={() => setShowEditPanel(true)}
         className="absolute top-7 right-4 z-20 text-brand-gray p-1 rounded-full hover:bg-gray-100 transition-colors"

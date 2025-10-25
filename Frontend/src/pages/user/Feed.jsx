@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import Reel from "../../components/Reel";
 import LoadingComponent from "../../components/LoadingComponent";
+
 function Feed() {
   const [videos, setVideos] = useState([]);
   const [page, setPage] = useState(1);
@@ -51,6 +52,13 @@ function Feed() {
     async (pageNum) => {
       setLoading(true);
       setError(null);
+
+      // **NEW: Enforce minimum loading time ONLY for initial page load**
+      const minLoadingTime =
+        pageNum === 1
+          ? new Promise((resolve) => setTimeout(resolve, 2000))
+          : Promise.resolve(); // No delay for subsequent pages
+
       try {
         const res = await axios.get(
           `http://localhost:8000/api/food/?page=${pageNum}&limit=5`, // Fetch 5 videos per page
@@ -70,6 +78,8 @@ function Feed() {
         console.error("Failed to fetch videos:", err);
         setError("Could not load feed. Please try again.");
       } finally {
+        // **NEW: Wait for minimum loading time before hiding loader**
+        await minLoadingTime;
         setLoading(false);
       }
     },
@@ -141,7 +151,10 @@ function Feed() {
     savedByUser: savedSet.has(video._id),
   }));
 
-  <LoadingComponent message="Loading Feed..." />;
+  // **NEW: Show loading component with minimum duration for initial load**
+  if (loading && page === 1) {
+    return <LoadingComponent message="Loading Feed..." minDuration={2000} />;
+  }
 
   if (error) {
     return (

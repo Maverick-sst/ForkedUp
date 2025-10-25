@@ -10,6 +10,7 @@ const orderRoutes = require("../src/routes/orders.routes");
 const featureRoutes = require("./routes/features.routes");
 const followRoutes = require("../src/routes/follow.routes");
 const locationRoutes = require("../src/routes/location.routes");
+const ratingsRoutes = require("../src/routes/ratings.routes");
 const cors = require("cors");
 
 const app = express();
@@ -32,4 +33,5 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/feature/", featureRoutes);
 app.use("/api/follow/", followRoutes);
 app.use("/api/location/", locationRoutes); //--- this will be used by both user and food-partner to quickly display form add on fronen
+app.use("/api/ratings", ratingsRoutes);
 module.exports = app;
