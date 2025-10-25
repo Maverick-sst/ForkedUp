@@ -2,10 +2,18 @@ const likeModel = require("../../models/Features/likes.model");
 const foodModel = require("../../models/food.model");
 
 async function getlikedReels(req, res) {
+  // Check if user is authenticated
+  if (!req.user) {
+    return res.status(401).json({
+      message: "User not authenticated",
+    });
+  }
+  
   const userId = req.user._id;
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 15;
 
+  // Check if userId is valid
   if (!userId || !page) {
     return res.status(404).json({
       message: "userId or page not found",

@@ -219,8 +219,17 @@ function PartnerProfile() {
     );
   }
   return (
-    <div className="min-h-screen bg-brand-offwhite font-body">
+    <div className="h-screen bg-brand-offwhite font-body flex flex-col">
       {/* Header */}
+      <style>{`
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
       <div className="bg-white shadow-sm sticky top-0 z-10 p-4 flex items-center">
         <button
           onClick={() => {
@@ -233,9 +242,9 @@ function PartnerProfile() {
         <h1 className="font-heading text-xl text-brand-gray">Edit Profile</h1>
       </div>
 
-      <div className="p-6">
+      <div className="flex-1 overflow-y-auto p-16 hide-scrollbar">
         {/* Profile Picture Section (UI only) */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-8 hide-scrollbar">
           <div className="relative">
             <img
               src={formData.profilePhoto}
@@ -262,7 +271,7 @@ function PartnerProfile() {
         </div>
 
         {/* Form Sections */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="bg-white rounded-2xl shadow-lg p-6 hide-scrollbar">
           <form onSubmit={(e) => e.preventDefault()}>
             <PersonalDetails
               isOpen={openSection === "personal"}
