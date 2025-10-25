@@ -20,7 +20,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173", 
-      "https://forkedup-4ko5jbnxi-maverick-ssts-projects.vercel.app"
+      "https://forkedup-4ko5jbnxi-maverick-ssts-projects.vercel.app",
+      "https://forkedup-one.vercel.app/"
     ],
     credentials: true,
   })
