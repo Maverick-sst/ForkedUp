@@ -277,7 +277,7 @@ function OrderSuccessPage() {
         </h1>
         <p className="text-red-500 mb-4">{error}</p>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           className="px-6 py-2 bg-brand-orange text-white rounded"
         >
           Go Home
@@ -293,7 +293,7 @@ function OrderSuccessPage() {
           Order Not Found
         </h1>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           className="px-6 py-2 bg-brand-orange text-white rounded"
         >
           Go Home
@@ -318,7 +318,7 @@ function OrderSuccessPage() {
       {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-10 p-4 flex items-center justify-center">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           className="absolute left-4 text-brand-gray"
         >
           <IoArrowBack size={24} />

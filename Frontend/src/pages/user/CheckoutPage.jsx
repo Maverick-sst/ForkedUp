@@ -320,7 +320,7 @@ export default function CheckoutPage() {
         console.error("Order created but ID missing in response");
         setOrderJustPlaced(true);
         clearCart(); // Still clear cart
-        navigate("/"); // Fallback navigation
+        navigate("/home"); // Fallback navigation
       }
     } catch (error) {
       console.error(
