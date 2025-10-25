@@ -1,8 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
-import { useNotification } from "../../components/Notification";
+import { useNotification } from "../../components/Notification.jsx";
 import { Eye, EyeOff } from "lucide-react";
+
 const logo =
   "https://ik.imagekit.io/eczrgfwzq/forkedUp_logo2.png?updatedAt=1761337612355";
 
@@ -11,14 +12,14 @@ const UserRegistration = () => {
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const [showPassword, setShowPassword] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
     if (!name.trim()) {
       showNotification("Name cannot be empty.", "error");
       return;
@@ -36,14 +37,12 @@ const UserRegistration = () => {
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       showNotification("Please enter a valid email address.", "error");
       return;
     }
 
-    // Username validation (alphanumeric and underscore only)
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
     if (!usernameRegex.test(userName)) {
       showNotification(
@@ -52,7 +51,6 @@ const UserRegistration = () => {
       );
       return;
     }
-
     setIsLoading(true);
 
     try {
@@ -76,16 +74,10 @@ const UserRegistration = () => {
       );
       console.log(response);
 
-      // **KEY FIX**: Wait for cookies to settle, then navigate
-      // Don't set isLoading to false - let the navigation happen
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Navigate immediately after delay - component will unmount
       navigate("/user/login");
-
-      // Note: No need to set isLoading(false) here as component unmounts
     } catch (error) {
-      // **ONLY set isLoading to false on error**
       setIsLoading(false);
 
       const message =
@@ -96,13 +88,11 @@ const UserRegistration = () => {
       showNotification(message, "error");
       console.error("Registration error:", error.response || error);
     }
-    // **REMOVED finally block** - it was causing the issue
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-brand-offwhite via-brand-peach/20 to-brand-offwhite p-4">
       <div className="w-full max-w-md bg-white p-8 md:p-10 rounded-xl shadow-lg border border-brand-gray-light space-y-6">
-        {/* Logo */}
         <img src={logo} alt="ForkedUp Logo" className="h-20 mx-auto mb-4" />
 
         <h1 className="font-heading text-2xl text-brand-gray text-center font-semibold">
@@ -110,7 +100,6 @@ const UserRegistration = () => {
         </h1>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
-          {/* Name Input */}
           <div>
             <label className="block text-sm font-medium text-brand-gray mb-1.5">
               Name
@@ -125,7 +114,6 @@ const UserRegistration = () => {
             />
           </div>
 
-          {/* Username Input */}
           <div>
             <label className="block text-sm font-medium text-brand-gray mb-1.5">
               Username
@@ -140,7 +128,6 @@ const UserRegistration = () => {
             />
           </div>
 
-          {/* Email Input */}
           <div>
             <label className="block text-sm font-medium text-brand-gray mb-1.5">
               Email
@@ -161,24 +148,23 @@ const UserRegistration = () => {
               Password
             </label>
             <input
-              type={showPassword ? "text" : "password"} // Toggle type based on state
-              className="w-full px-4 py-2.5 pr-10 bg-gray-50 border border-brand-gray-light rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/50 transition duration-200" // Added pr-10 for icon space
+              type={showPassword ? "text" : "password"}
+              className="w-full px-4 py-2.5 pr-10 bg-gray-50 border border-brand-gray-light rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/50 transition duration-200" // Added pr-10
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
             />
             <button
-              type="button" // Important: Prevent form submission
+              type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-[-4px] text-brand-gray hover:text-brand-orange focus:outline-none" // Position the button
+              className="absolute right-3 top-1/2 transform -translate-y-[-4px] text-brand-gray hover:text-brand-orange focus:outline-none" // Position button
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
@@ -218,7 +204,6 @@ const UserRegistration = () => {
           </button>
         </form>
 
-        {/* Link to Login */}
         <div className="text-center text-sm">
           <span className="text-brand-gray">Already have an account? </span>
           <Link

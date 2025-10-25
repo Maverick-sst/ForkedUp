@@ -1,7 +1,8 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
-import { useNotification } from "../../components/Notification";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useAuth } from "/src/context/AuthContext.jsx";
+import { useNotification } from "/src/components/Notification.jsx";
 import { Eye, EyeOff } from "lucide-react";
 const logo =
   "https://ik.imagekit.io/eczrgfwzq/forkedUp_logo2.png?updatedAt=1761337612355";
@@ -12,14 +13,15 @@ const FoodPartnerLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { checkAuthStatus } = useAuth();
   const { showNotification } = useNotification();
 
-  // Basic email validation regex
   const isEmail = (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // --- Basic Validation ---
+
     if (!userName.trim()) {
       showNotification("Username or Email cannot be empty.", "error");
       return;
@@ -44,8 +46,6 @@ const FoodPartnerLogin = () => {
           withCredentials: true,
         }
       );
-
-      // Store JWT token if returned (optional, depends on backend setup)
       if (response.data?.token) {
         localStorage.setItem("authToken", response.data.token);
         axios.defaults.headers.common[
@@ -55,7 +55,12 @@ const FoodPartnerLogin = () => {
 
       showNotification("Login successful! Welcome back.", "success");
       console.log("Login response:", response);
-      navigate("/dashboard");
+
+      await checkAuthStatus();
+
+      const redirectPath = location.state?.from?.pathname || "/dashboard";
+      console.log("Redirecting partner to:", redirectPath);
+      navigate(redirectPath, { replace: true });
     } catch (error) {
       const message =
         error.response?.data?.message ||
@@ -64,7 +69,6 @@ const FoodPartnerLogin = () => {
           : "Login failed. Please try again.");
       showNotification(message, "error");
       console.error("Login error:", error.response || error);
-    } finally {
       setIsLoading(false);
     }
   };

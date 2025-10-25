@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { SearchX } from 'lucide-react';
+import { Link } from "react-router-dom";
+import { SearchX } from "lucide-react";
 
 const logo =
   "https://ik.imagekit.io/eczrgfwzq/forkedUp_logo2.png?updatedAt=1761337612355";
@@ -15,18 +15,19 @@ const NotFoundPage = () => {
         404 - Page Not Found
       </h1>
       <p className="text-lg text-brand-gray mb-8 max-w-md">
-        Oops! It seems like the page you were looking for doesn't exist or has been moved.
+        Oops! It seems like the page you were looking for doesn't exist or has
+        been moved.
       </p>
 
       <div className="flex gap-4">
         <Link
-          to="/" 
+          to="/" // Link to the Home page
           className="px-6 py-3 bg-brand-orange text-white font-heading rounded-lg shadow hover:opacity-90 transition-opacity"
         >
           Go Home
         </Link>
         <button
-          onClick={() => window.history.back()} 
+          onClick={() => window.history.back()} // Go back to previous page
           className="px-6 py-3 bg-gray-200 text-brand-gray font-heading rounded-lg shadow hover:bg-gray-300 transition-colors"
         >
           Go Back
@@ -37,4 +38,3 @@ const NotFoundPage = () => {
 };
 
 export default NotFoundPage;
-

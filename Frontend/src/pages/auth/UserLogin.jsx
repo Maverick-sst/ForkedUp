@@ -1,24 +1,27 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
-import { useNotification } from "../../components/Notification";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNotification } from "../../components/Notification.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { Eye, EyeOff } from "lucide-react";
+
 const logo =
   "https://ik.imagekit.io/eczrgfwzq/forkedUp_logo2.png?updatedAt=1761337612355";
-import { Eye, EyeOff } from "lucide-react";
+
 const UserLogin = () => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  // const location = useLocation();
   const { showNotification } = useNotification();
   const [showPassword, setShowPassword] = useState(false);
+  const { checkAuthStatus } = useAuth();
 
-  // Basic email validation regex
   const isEmail = (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // --- Basic Validation ---
     if (!userName.trim()) {
       showNotification("Username or Email cannot be empty.", "error");
       return;
@@ -43,8 +46,6 @@ const UserLogin = () => {
           withCredentials: true,
         }
       );
-
-      // Store JWT token if returned (optional, depends on backend setup)
       if (response.data?.token) {
         localStorage.setItem("authToken", response.data.token);
         axios.defaults.headers.common[
@@ -54,7 +55,12 @@ const UserLogin = () => {
 
       showNotification("Login successful! Welcome back.", "success");
       console.log("Login response:", response);
-      navigate("/feed");
+
+      await checkAuthStatus();
+
+      const redirectPath = "/feed";
+      console.log("Redirecting to:", redirectPath);
+      navigate(redirectPath, { replace: true });
     } catch (error) {
       const message =
         error.response?.data?.message ||
@@ -63,7 +69,6 @@ const UserLogin = () => {
           : "Login failed. Please try again.");
       showNotification(message, "error");
       console.error("Login error:", error.response || error);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -100,7 +105,7 @@ const UserLogin = () => {
               Password
             </label>
             <input
-              type={showPassword ? "text" : "password"} // Toggle type based on state
+              type={showPassword ? "text" : "password"}
               className="w-full px-4 py-2.5 pr-10 bg-gray-50 border border-brand-gray-light rounded-lg focus:outline-none focus:border-brand-orange focus:ring-1 focus:ring-brand-orange/50 transition duration-200" // Added pr-10 for icon space
               placeholder="••••••••"
               value={password}
@@ -108,7 +113,7 @@ const UserLogin = () => {
               disabled={isLoading}
             />
             <button
-              type="button" // Important: Prevent form submission
+              type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-[-4px] text-brand-gray hover:text-brand-orange focus:outline-none" // Position the button
               aria-label={showPassword ? "Hide password" : "Show password"}
