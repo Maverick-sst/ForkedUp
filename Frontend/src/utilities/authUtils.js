@@ -1,4 +1,5 @@
 import axios from 'axios';
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 /**
  * Clears all browser storage and cookies on logout
@@ -7,7 +8,7 @@ import axios from 'axios';
 export const handleLogout = async (navigate) => {
   try {
     // 1. Call backend logout endpoint if you have one
-    await axios.delete('http://localhost:8000/api/auth/logout', {}, { withCredentials: true });
+    await axios.delete(`${apiUrl}/api/auth/logout`, {}, { withCredentials: true });
     
     // 2. Clear localStorage completely
     localStorage.clear();

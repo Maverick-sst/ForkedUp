@@ -7,6 +7,8 @@ import { useCart } from "../context/CartContext";
 import CommentPanel from "./CommentPanel";
 import BottomNav from "./BottomNav";
 import { useNotification } from "./Notification";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 // Accept new props from Feed.jsx
 function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
   const [videos, setVideos] = useState(listOfVideos);
@@ -76,7 +78,7 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
         console.log(`Fetching partner details for ID: ${id}`); // Log fetching attempt
         // Use the correct endpoint structure: /api/food-partner/:id
         const res = await axios.get(
-          `http://localhost:8000/api/food-partner/${id}`,
+          `${apiUrl}/api/food-partner/${id}`,
           { withCredentials: true }
         );
         // Access nested partner data correctly based on controller response
@@ -155,13 +157,13 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
     // 2. Make API call (as before)
     try {
       if (currentLikeStatus) {
-        await axios.delete("http://localhost:8000/api/feature/like", {
+        await axios.delete(`${apiUrl}/api/feature/like`, {
           data: { videoId: videoId },
           withCredentials: true,
         });
       } else {
         await axios.post(
-          "http://localhost:8000/api/feature/like",
+          `${apiUrl}/api/feature/like`,
           { videoId: videoId },
           { withCredentials: true }
         );
@@ -204,13 +206,13 @@ function Reel({ listOfVideos, onLikeToggle, onSaveToggle, lastVideoRef }) {
     // 2. Make API call
     try {
       if (currentSaveStatus) {
-        await axios.delete("http://localhost:8000/api/feature/save", {
+        await axios.delete(`${apiUrl}/api/feature/save`, {
           data: { videoId: videoId },
           withCredentials: true,
         });
       } else {
         await axios.post(
-          "http://localhost:8000/api/feature/save",
+          `${apiUrl}/api/feature/save`,
           { videoId: videoId },
           { withCredentials: true }
         );

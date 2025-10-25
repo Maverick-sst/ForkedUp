@@ -6,6 +6,8 @@ import { IoArrowBack, IoAdd } from "react-icons/io5";
 import { FaEdit, FaVideoSlash } from "react-icons/fa";
 import BottomNav from "../../components/BottomNav";
 import { useNotification } from "../../components/Notification";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 function CartPage() {
   const { cartItems, updateItemQuantity, totalAmount } = useCart();
   const navigate = useNavigate();
@@ -32,7 +34,7 @@ function CartPage() {
       try {
         const partnerPromises = idsToFetch.map((id) =>
           axios
-            .get(`http://localhost:8000/api/food-partner/${id}`, {
+            .get(`${apiUrl}/api/food-partner/${id}`, {
               withCredentials: true,
             })
             .then((res) => ({

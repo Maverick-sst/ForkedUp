@@ -7,6 +7,8 @@ import BottomNav from "../../components/BottomNav";
 import SearchResultItem from "../../components/SearchResultItem";
 import _ from "lodash";
 import { FaMapMarkerAlt } from "react-icons/fa";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 function Home() {
   const { location, status, requestLocation } = useGeoLocation();
   const [address, setAddress] = useState(() => {
@@ -24,7 +26,7 @@ function Home() {
     const fetchUserDetails = async () => {
       setLoadingUser(true);
       try {
-        const response = await axios.get("http://localhost:8000/api/me", {
+        const response = await axios.get(`${apiUrl}/api/me`, {
           withCredentials: true,
         });
         if (response.data?.user?.userName) {
@@ -55,7 +57,7 @@ function Home() {
     if (status === "ready" && location) {
       axios
         .get(
-          `http://localhost:8000/api/location/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
+          `${apiUrl}/api/location/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
         )
         .then((res) => {
           if (!res?.data?.address) return;
@@ -81,7 +83,7 @@ function Home() {
       console.log(`Searching globally for: ${query}`);
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/food/search?q=${encodeURIComponent(
+          `${apiUrl}/api/food/search?q=${encodeURIComponent(
             query
           )}`,
           { withCredentials: true }

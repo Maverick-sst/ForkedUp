@@ -8,6 +8,8 @@ import {
 } from "react";
 import axios from "axios";
 import LoadingComponent from "../components/LoadingComponent";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 
 const AuthContext = createContext(null);
 
@@ -25,7 +27,7 @@ export const AuthProvider = ({ children }) => {
     setAuthState((prevState) => ({ ...prevState, isLoading: true }));
     try {
       // Use your existing /api/me endpoint which relies on the httpOnly cookie
-      const response = await axios.get("http://localhost:8000/api/me", {
+      const response = await axios.get(`${apiUrl}/api/me`, {
         withCredentials: true,
       });
 

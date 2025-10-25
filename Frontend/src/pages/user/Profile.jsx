@@ -8,6 +8,8 @@ import EditUserProfile from "./EditUserProfile";
 import OrderSummary from "../../components/OrderSummary";
 import LoadingComponent from "../../components/LoadingComponent";
 import { handleLogout } from "../../utilities/authUtils";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 function Profile() {
   const [activeBtn, setActiveBtn] = useState("liked");
   const [likedReels, setLikedReels] = useState([]);
@@ -25,7 +27,7 @@ function Profile() {
     setLoadingUser(true);
     const minLoadingTime = new Promise((resolve) => setTimeout(resolve, 1800));
     axios
-      .get("http://localhost:8000/api/me", { withCredentials: true })
+      .get(`${apiUrl}/api/me`, { withCredentials: true })
       .then((response) => {
         if (response.data?.user) {
           setUserData({
@@ -61,10 +63,10 @@ function Profile() {
 
     if (activeBtn === "liked") {
       endpoint =
-        "http://localhost:8000/api/food/user/likedreels?page=1&limit=15";
+        `${apiUrl}/api/food/user/likedreels?page=1&limit=15`;
     } else if (activeBtn === "savedreels") {
       endpoint =
-        "http://localhost:8000/api/food/user/savedreels?page=1&limit=15";
+        `${apiUrl}/api/food/user/savedreels?page=1&limit=15`;
     } else {
       return;
     }

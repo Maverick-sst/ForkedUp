@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Reel from "../../components/Reel";
 import LoadingComponent from "../../components/LoadingComponent";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 function FoodPartnerReels() {
   const { id: foodPartnerId, foodId: initialFoodId } = useParams();
@@ -27,7 +28,7 @@ function FoodPartnerReels() {
 
     try {
       const res = await axios.get(
-        `http://localhost:8000/api/feature/interactions?ids=${videoIds}`,
+        `${apiUrl}/api/feature/interactions?ids=${videoIds}`,
         { withCredentials: true }
       );
       const { liked, saved } = res.data;
@@ -61,7 +62,7 @@ function FoodPartnerReels() {
 
       try {
         const res = await axios.get(
-          `http://localhost:8000/api/food-partner/${foodPartnerId}?page=${pageNum}&limit=5`,
+          `${apiUrl}/api/food-partner/${foodPartnerId}?page=${pageNum}&limit=5`,
           { withCredentials: true }
         );
 

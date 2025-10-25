@@ -9,6 +9,8 @@ import _ from "lodash";
 import { FaUserCheck, FaUserPlus } from "react-icons/fa";
 import { useNotification } from "../../components/Notification";
 import LoadingComponent from "../../components/LoadingComponent"; // Adjust path if needed
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 const FoodPartnerProfile = () => {
   const { id: partnerId } = useParams();
   const videoRefs = useRef(new Map());
@@ -54,10 +56,10 @@ const FoodPartnerProfile = () => {
         // Fetch profile and follow status concurrently
 
         const [profileResponse, followStatusResponse] = await Promise.all([
-          axios.get(`http://localhost:8000/api/food-partner/${partnerId}`, {
+          axios.get(`${apiUrl}/api/food-partner/${partnerId}`, {
             withCredentials: true,
           }),
-          axios.get(`http://localhost:8000/api/follow/status/${partnerId}`, {
+          axios.get(`${apiUrl}/api/follow/status/${partnerId}`, {
             withCredentials: true,
           }),
         ]);
@@ -97,7 +99,7 @@ const FoodPartnerProfile = () => {
     setLoadingSummary(true);
     try {
       const response = await axios.get(
-        `http://localhost:8000/api/food-partner/${partnerId}/menu-summary`,
+        `${apiUrl}/api/food-partner/${partnerId}/menu-summary`,
         { withCredentials: true }
       );
       setMenuSummary(response.data.summary);
@@ -121,7 +123,7 @@ const FoodPartnerProfile = () => {
       console.log(`Searching partner ${partnerId} for: ${query}`);
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/food/search?q=${encodeURIComponent(
+          `${apiUrl}/api/food/search?q=${encodeURIComponent(
             query
           )}&partnerId=${partnerId}`,
           { withCredentials: true }
@@ -153,7 +155,7 @@ const FoodPartnerProfile = () => {
     try {
       if (currentlyFollowing) {
         const response = await axios.delete(
-          `http://localhost:8000/api/follow/${partnerId}`,
+          `${apiUrl}/api/follow/${partnerId}`,
           { withCredentials: true }
         );
 
@@ -162,7 +164,7 @@ const FoodPartnerProfile = () => {
         }
       } else {
         const response = await axios.post(
-          `http://localhost:8000/api/follow/${partnerId}`,
+          `${apiUrl}/api/follow/${partnerId}`,
           {},
           { withCredentials: true }
         );

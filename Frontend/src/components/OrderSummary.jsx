@@ -3,6 +3,8 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import { Clock, CheckCircle, XCircle } from "lucide-react";
 import LoadingComponent from "./LoadingComponent";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 const formatDate = (dateString) => {
   if (!dateString) return "";
   const options = {
@@ -68,7 +70,7 @@ function OrderSummary() {
       setErrorOrders(null);
       try {
         const response = await axios.get(
-          "http://localhost:8000/api/orders/user",
+          `${apiUrl}/api/orders/user`,
           {
             withCredentials: true,
           }

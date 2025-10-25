@@ -12,6 +12,8 @@ import ProgressRing from "../../components/ProgressRing";
 import axios from "axios";
 import LoadingComponent from "../../components/LoadingComponent";
 import { handleLogout } from "../../utilities/authUtils";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 // --- Onboarding View (Remains the same) ---
 const OnboardingView = () => {
   const profileCompletion = 25;
@@ -46,7 +48,7 @@ const OperationalDashboard = () => {
     console.log("Polling for pending orders...");
     try {
       const response = await axios.get(
-        "http://localhost:8000/api/orders/partner?status=pending",
+        `${apiUrl}/api/orders/partner?status=pending`,
         { withCredentials: true }
       );
       setPendingOrders(response.data.orders || []);
@@ -66,7 +68,7 @@ const OperationalDashboard = () => {
     const activeStatuses = "accepted,preparing,out_for_delivery";
     try {
       const response = await axios.get(
-        `http://localhost:8000/api/orders/partner?status=${activeStatuses}`,
+        `${apiUrl}/api/orders/partner?status=${activeStatuses}`,
         { withCredentials: true }
       );
       setActiveOrders(response.data.orders || []);
@@ -93,7 +95,7 @@ const OperationalDashboard = () => {
     setErrorOrders(null);
     try {
       await axios.patch(
-        `http://localhost:8000/api/orders/partner/${orderId}/status`,
+        `${apiUrl}/api/orders/partner/${orderId}/status`,
         { status: newStatus },
         { withCredentials: true }
       );
@@ -403,7 +405,7 @@ function Dashboard() {
       );
 
       try {
-        const response = await axios.get("http://localhost:8000/api/me", {
+        const response = await axios.get(`${apiUrl}/api/me`, {
           withCredentials: true,
         });
 

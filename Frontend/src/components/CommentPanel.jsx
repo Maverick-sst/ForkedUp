@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { IoClose, IoSend } from "react-icons/io5";
 import { FaUserCircle } from "react-icons/fa"; // Placeholder icon
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 // Simple time ago function (consider using a library like date-fns for more complex needs)
 function timeAgo(date) {
@@ -43,7 +44,7 @@ function CommentPanel({ foodId, onClose }) {
 
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/food/${foodId}/comments?page=${pageToFetch}&limit=15`,
+          `${apiUrl}/api/food/${foodId}/comments?page=${pageToFetch}&limit=15`,
           { withCredentials: true }
         );
         const data = response.data;
@@ -102,7 +103,7 @@ function CommentPanel({ foodId, onClose }) {
 
     try {
       const response = await axios.post(
-        `http://localhost:8000/api/food/${foodId}/comment`,
+        `${apiUrl}/api/food/${foodId}/comment`,
         { comment: newComment.trim() },
         { withCredentials: true }
       );

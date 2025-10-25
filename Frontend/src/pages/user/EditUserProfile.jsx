@@ -10,6 +10,8 @@ import updateNestedState from "../../utilities/updateNestedState";
 import { getObjectDiff } from "../../utilities/dataDifference";
 import { useNotification } from "../../components/Notification";
 import LoadingComponent from "../../components/LoadingComponent";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 // This component receives an `onClose` function prop from Profile.jsx
 function EditUserProfile({ onClose }) {
   const [openSection, setOpenSection] = useState("personal");
@@ -32,7 +34,7 @@ function EditUserProfile({ onClose }) {
       setLoading(true);
       setErrorMessage("");
       try {
-        const response = await axios.get("http://localhost:8000/api/me", {
+        const response = await axios.get(`${apiUrl}/api/me`, {
           withCredentials: true,
         });
         const profileData = response.data.user;
@@ -74,7 +76,7 @@ function EditUserProfile({ onClose }) {
         );
         try {
           const response = await axios.get(
-            `http://localhost:8000/api/location/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
+            `${apiUrl}/api/location/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
           );
           const formattedAddress = response.data.address;
           if (formattedAddress) {
@@ -127,7 +129,7 @@ function EditUserProfile({ onClose }) {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/upload",
+        `${apiUrl}/api/upload`,
         uploadFormData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -261,7 +263,7 @@ function EditUserProfile({ onClose }) {
 
     try {
       const response = await axios.patch(
-        "http://localhost:8000/api/user/profile",
+        `${apiUrl}/api/user/profile`,
         updates,
         { withCredentials: true }
       );

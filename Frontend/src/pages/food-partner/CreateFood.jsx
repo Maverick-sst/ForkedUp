@@ -4,6 +4,7 @@ import { IoArrowBack } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { useNotification } from "../../components/Notification";
 import axios from "axios";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 function CreateFood() {
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ function CreateFood() {
       uploadFormData.append("file", videoFile);
 
       const uploadResponse = await axios.post(
-        "http://localhost:8000/api/upload",
+        `${apiUrl}/api/upload`,
         uploadFormData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -82,7 +83,7 @@ function CreateFood() {
       };
 
       // 3. Send the complete, final data object to the create food endpoint
-      await axios.post("http://localhost:8000/api/food/", finalFoodData, {
+      await axios.post(`${apiUrl}/api/food/`, finalFoodData, {
         withCredentials: true,
       });
 

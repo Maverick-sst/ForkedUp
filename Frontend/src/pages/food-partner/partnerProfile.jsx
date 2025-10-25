@@ -11,6 +11,8 @@ import { useGeoLocation } from "../../hooks/useGeoLocation";
 import updateNestedState from "../../utilities/updateNestedState";
 import { getObjectDiff } from "../../utilities/dataDifference";
 import { useNotification } from "../../components/Notification";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 function PartnerProfile() {
   const { showNotification } = useNotification();
   const navigate = useNavigate();
@@ -27,7 +29,7 @@ function PartnerProfile() {
     const fetchProfileData = async () => {
       const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1800));
       try {
-        const response = await axios.get("http://localhost:8000/api/me", {
+        const response = await axios.get(`${apiUrl}/api/me`, {
           withCredentials: true,
         });
         const profileData = response.data.foodPartner;
@@ -73,7 +75,7 @@ function PartnerProfile() {
       try {
         if (location) {
           const response = await axios.get(
-            `http://localhost:8000/api/location/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
+            `${apiUrl}/api/location/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
           );
           setFormData((prevData) => ({
             ...prevData,
@@ -103,7 +105,7 @@ function PartnerProfile() {
     formData.append("file", file);
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/upload",
+        `${apiUrl}/api/upload`,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -189,7 +191,7 @@ function PartnerProfile() {
     }
     try {
       const response = await axios.patch(
-        "http://localhost:8000/api/food-partner/profile",
+        `${apiUrl}/api/food-partner/profile`,
         updates,
         {
           withCredentials: true,

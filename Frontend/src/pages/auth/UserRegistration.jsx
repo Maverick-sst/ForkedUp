@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { useNotification } from "../../components/Notification.jsx";
 import { Eye, EyeOff } from "lucide-react";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const logo =
   "https://ik.imagekit.io/eczrgfwzq/forkedUp_logo2.png?updatedAt=1761337612355";
@@ -55,7 +56,7 @@ const UserRegistration = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/auth/user/register",
+        `${apiUrl}/api/auth/user/register`,
         {
           name,
           userName,

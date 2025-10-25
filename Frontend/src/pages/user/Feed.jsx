@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import Reel from "../../components/Reel";
 import LoadingComponent from "../../components/LoadingComponent";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 function Feed() {
   const [videos, setVideos] = useState([]);
@@ -24,7 +25,7 @@ function Feed() {
 
     try {
       const res = await axios.get(
-        `http://localhost:8000/api/feature/interactions?ids=${videoIds}`,
+        `${apiUrl}/api/feature/interactions?ids=${videoIds}`,
         { withCredentials: true }
       );
 
@@ -61,7 +62,7 @@ function Feed() {
 
       try {
         const res = await axios.get(
-          `http://localhost:8000/api/food/?page=${pageNum}&limit=5`, // Fetch 5 videos per page
+          `${apiUrl}/api/food/?page=${pageNum}&limit=5`, // Fetch 5 videos per page
           { withCredentials: true }
         );
 

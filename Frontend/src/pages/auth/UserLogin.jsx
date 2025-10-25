@@ -4,7 +4,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useNotification } from "../../components/Notification.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { Eye, EyeOff } from "lucide-react";
-
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const logo =
   "https://ik.imagekit.io/eczrgfwzq/forkedUp_logo2.png?updatedAt=1761337612355";
 
@@ -39,7 +39,7 @@ const UserLogin = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/auth/user/login",
+        `${apiUrl}/api/auth/user/login`,
         loginData,
         {
           headers: { "Content-Type": "application/json" },

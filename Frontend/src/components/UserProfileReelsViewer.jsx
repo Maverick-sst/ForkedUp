@@ -6,6 +6,7 @@ import { ArrowLeft, Play, Pause } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import CommentPanel from "./CommentPanel";
 import BottomNav from "./BottomNav";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 // This component now behaves very similarly to Reel.jsx
 // It accepts listOfVideos from location state and manages interactions internally
@@ -57,7 +58,7 @@ function UserProfileReelsViewer() {
       console.log(`Fetching initial interactions for video IDs: ${videoIds}`);
       try {
         const res = await axios.get(
-          `http://localhost:8000/api/feature/interactions?ids=${videoIds}`,
+          `${apiUrl}/api/feature/interactions?ids=${videoIds}`,
           { withCredentials: true }
         );
         const { liked, saved } = res.data;
@@ -94,7 +95,7 @@ function UserProfileReelsViewer() {
 
       const partnerPromises = idsToFetch.map((id) =>
         axios
-          .get(`http://localhost:8000/api/food-partner/${id}`, {
+          .get(`${apiUrl}/api/food-partner/${id}`, {
             withCredentials: true,
           })
           .then((res) => ({
@@ -238,7 +239,7 @@ function UserProfileReelsViewer() {
 
     // 2. API Call
     try {
-      const url = "http://localhost:8000/api/feature/like";
+      const url = `${apiUrl}/api/feature/like`;
       const config = { withCredentials: true };
       if (currentLikeStatus)
         await axios.delete(url, { data: { videoId }, ...config });
@@ -278,7 +279,7 @@ function UserProfileReelsViewer() {
     });
 
     try {
-      const url = "http://localhost:8000/api/feature/save";
+      const url = `${apiUrl}/api/feature/save`;
       const config = { withCredentials: true };
       if (currentSaveStatus)
         await axios.delete(url, { data: { videoId }, ...config });

@@ -16,6 +16,7 @@ import {
   // FaStar and FaTimes removed from here
 } from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const getStatusDetails = (status) => {
   switch (status) {
@@ -168,7 +169,7 @@ function OrderSuccessPage() {
 
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/orders/${orderId}`,
+          `${apiUrl}/api/orders/${orderId}`,
           { withCredentials: true }
         );
         setOrder(response.data.order || null);
@@ -241,7 +242,7 @@ function OrderSuccessPage() {
       }
 
       await axios.post(
-        `http://localhost:8000/api/ratings/${partnerId}`,
+        `${apiUrl}/api/ratings/${partnerId}`,
         { rating, comment },
         { withCredentials: true }
       );

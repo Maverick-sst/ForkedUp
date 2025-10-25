@@ -6,6 +6,7 @@ import { useNotification } from "/src/components/Notification.jsx";
 import { Eye, EyeOff } from "lucide-react";
 const logo =
   "https://ik.imagekit.io/eczrgfwzq/forkedUp_logo2.png?updatedAt=1761337612355";
+const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const FoodPartnerLogin = () => {
   const [userName, setUserName] = useState("");
@@ -39,7 +40,7 @@ const FoodPartnerLogin = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/auth/foodPartner/login",
+        `${apiUrl}/api/auth/foodPartner/login`,
         loginData,
         {
           headers: { "Content-Type": "application/json" },
