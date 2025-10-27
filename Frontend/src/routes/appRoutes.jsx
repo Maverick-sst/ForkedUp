@@ -33,7 +33,7 @@ const RedirectIfLoggedIn = ({ children }) => {
     // Redirect based on role
     return (
       <Navigate
-        to={authState.role === "foodpartner" ? "/dashboard" : "/"} // Keep redirecting logged-in users to Home ('/') inside protected routes
+        to={authState.role === "foodpartner" ? "/dashboard" : "/home"} // Keep redirecting logged-in users to Home ('/') inside protected routes
         replace
       />
     );
