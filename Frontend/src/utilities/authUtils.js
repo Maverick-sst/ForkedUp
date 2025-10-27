@@ -5,30 +5,35 @@ const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
  * Clears all browser storage and cookies on logout
  * Prevents conflicts between different user sessions
  */
-export const handleLogout = async (navigate) => {
+export const handleLogout = async (navigate, userRole) => { 
   try {
-    // 1. Call backend logout endpoint if you have one
-    await axios.delete(`${apiUrl}/api/auth/logout`, {}, { withCredentials: true });
-    
-    // 2. Clear localStorage completely
+    let logoutUrl = '';
+    // Determine the correct logout endpoint based on the role
+    if (userRole === 'user') {
+      logoutUrl = `${apiUrl}/api/auth/user/logout`;
+    } else if (userRole === 'foodpartner') {
+      logoutUrl = `${apiUrl}/api/auth/foodPartner/logout`;
+    } else {
+      console.warn('Unknown user role for logout:', userRole);
+
+    }
+    // Clear frontend storage regardless of backend call success
     localStorage.clear();
-    
-    // 3. Clear sessionStorage
     sessionStorage.clear();
-    
-    // 4. Clear axios default headers
-    delete axios.defaults.headers.common['Authorization'];
-    
-    // 5. Navigate to landing page
-    navigate('/landing');
-    
-    console.log('Logout successful - all storage cleared');
+    delete axios.defaults.headers.common['Authorization']; // If you set this elsewhere
+
+    // Navigate to landing page (root route)
+    navigate('/');
+    setTimeout(() => window.location.reload(), 50);
+    console.log('Frontend logout steps completed.');
+
   } catch (error) {
-    console.error('Logout error:', error);
-    // Even if backend logout fails, clear local storage
+    console.error('Logout error:', error.response?.data || error.message);
     localStorage.clear();
     sessionStorage.clear();
-    navigate('/landing');
+    delete axios.defaults.headers.common['Authorization'];
+    navigate('/');
+    setTimeout(() => window.location.reload(), 50);
   }
 };
 
