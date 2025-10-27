@@ -13,7 +13,7 @@ import axios from "axios";
 import LoadingComponent from "../../components/LoadingComponent";
 import { handleLogout } from "../../utilities/authUtils";
 const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-
+const { authState } = useAuth();
 // --- Onboarding View (Remains the same) ---
 const OnboardingView = () => {
   const profileCompletion = 25;
