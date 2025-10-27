@@ -13,8 +13,8 @@ import axios from "axios";
 import LoadingComponent from "../../components/LoadingComponent";
 import { handleLogout } from "../../utilities/authUtils";
 const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-import { useAuth } from "../../context/AuthContext";
-const { authState } = useAuth();
+// import { useAuth } from "../../context/AuthContext";
+// const { authState } = useAuth();
 // --- Onboarding View (Remains the same) ---
 const OnboardingView = () => {
   const profileCompletion = 25;
@@ -446,7 +446,7 @@ function Dashboard() {
       <button
         onClick={() => {
           if (window.confirm("Are you sure you want to logout?")) {
-            handleLogout(navigate,authState.role);
+            handleLogout(navigate,"foodpartner");
           }
         }}
         className="absolute top-3 right-3 z-30 px-3 py-1 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition-colors flex items-center gap-1 text-xs font-medium"
