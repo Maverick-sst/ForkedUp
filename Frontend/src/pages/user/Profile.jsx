@@ -132,7 +132,7 @@ function Profile() {
       <button
         onClick={() => {
           if (window.confirm("Are you sure you want to logout?")) {
-            handleLogout(navigate);
+            handleLogout(navigate, authState.role);
           }
         }}
         className="absolute top-7 right-16 z-20 text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors"
