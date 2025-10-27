@@ -3,6 +3,12 @@ const foodPartnerModel = require("../models/foodpartner.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const cookieOptions = {
+    httpOnly: true, // Prevents client-side JS access
+    secure: process.env.NODE_ENV === 'production', // MUST be true in production (HTTPS)
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 'None' for cross-site, 'Lax' for local/same-site
+    path: '/', 
+};
 async function registerUser(req, res) {
   const { name, userName, email, password } = req.body;
 
@@ -30,14 +36,6 @@ async function registerUser(req, res) {
     email,
     password: hashedPassword,
   });
-  const token = jwt.sign(
-    {
-      id: user._id,
-    },
-    process.env.secret_key
-  );
-
-  res.cookie("token", token);
 
   res.status(201).json({
     message: "User registered successfully",
@@ -56,7 +54,7 @@ async function loginUser(req, res) {
   const user = await userModel.findOne({
     $or: [{ userName }, { email }]
   });
-  
+
   if (!user) {
     return res.status(401).json({ message: "Invalid Credentials" });
   }
@@ -72,7 +70,8 @@ async function loginUser(req, res) {
     { id: user._id, role: "user" },
     process.env.secret_key
   );
-  res.cookie("token", token);
+
+  res.cookie("token", token, cookieOptions); 
 
   return res.status(200).json({
     message: "Login successful",
@@ -85,13 +84,9 @@ async function loginUser(req, res) {
   });
 }
 async function logoutUser(req, res) {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-    path: "/",
-  });
-  res.send(200).json({
+ 
+  res.clearCookie("token", { ...cookieOptions, maxAge: 0 }); 
+  res.status(200).json({ 
     message: "Log out Successfull",
   });
 }
@@ -123,18 +118,10 @@ async function registerFoodPartner(req, res) {
     email,
     password: hashedPassword,
   });
-  const token = jwt.sign(
-    {
-      id: foodPartner._id,
-    },
-    process.env.secret_key
-  );
-
-  res.cookie("token", token);
 
   res.status(201).json({
     message: "registered successfully",
-    user: {
+    user: { 
       _id: foodPartner._id,
       email: foodPartner.email,
       name: foodPartner.name,
@@ -168,7 +155,9 @@ async function loginFoodPartner(req, res) {
     { id: foodPartner._id, role: "foodpartner" },
     process.env.secret_key
   );
-  res.cookie("token", token);
+
+ 
+  res.cookie("token", token, cookieOptions); 
 
   return res.status(200).json({
     message: "Partner logged in successfully",
@@ -182,12 +171,8 @@ async function loginFoodPartner(req, res) {
 }
 
 async function logoutFoodPartner(req, res) {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-    path: "/",
-  });
+ 
+  res.clearCookie("token", { ...cookieOptions, maxAge: 0 }); 
   res.status(200).json({
     message: "Partner LoggedOut Successfully",
   });
