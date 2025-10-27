@@ -92,7 +92,7 @@ To run this project locally, follow these steps:
 
 ## 🌐 Deployment
 
-* **Frontend:** https://forkedup-4ko5jbnxi-maverick-ssts-projects.vercel.app
+* **Frontend:** "https://forked-up-eosin.vercel.app/"
 * **Backend:** https://forkedup-backend.onrender.com
 * **API documentation:** https://documenter.getpostman.com/view/47884007/2sB3Wjzihv
 
