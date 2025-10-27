@@ -7,10 +7,10 @@ import BottomNav from "../../components/BottomNav";
 import EditUserProfile from "./EditUserProfile";
 import OrderSummary from "../../components/OrderSummary";
 import LoadingComponent from "../../components/LoadingComponent";
-import { useAuth } from "../../context/AuthContext";
+// import { useAuth } from "../../context/AuthContext";
 import { handleLogout } from "../../utilities/authUtils";
 const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-const { authState } = useAuth();
+// const { authState } = useAuth();
 function Profile() {
   const [activeBtn, setActiveBtn] = useState("liked");
   const [likedReels, setLikedReels] = useState([]);
@@ -133,7 +133,7 @@ function Profile() {
       <button
         onClick={() => {
           if (window.confirm("Are you sure you want to logout?")) {
-            handleLogout(navigate, authState.role);
+            handleLogout(navigate,"user");
           }
         }}
         className="absolute top-7 right-16 z-20 text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors"
