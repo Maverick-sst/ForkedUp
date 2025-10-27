@@ -386,7 +386,7 @@ function OrderSuccessPage() {
 
         {/* Back to Home Button */}
         <div className="text-center mt-6">
-          <Link to="/" className="text-brand-orange hover:underline text-sm">
+          <Link to="/home" className="text-brand-orange hover:underline text-sm">
             Back to Home
           </Link>
         </div>
