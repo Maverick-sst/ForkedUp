@@ -18,18 +18,14 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173", 
-      "https://forkedup-4ko5jbnxi-maverick-ssts-projects.vercel.app",
-      "https://forkedup-one.vercel.app/"
-    ],
+    origin: ["http://localhost:5173", "https://forked-up-eosin.vercel.app/"],
     credentials: true,
   })
 );
 
-app.get('/healthcheck', (req, res) => {
-  console.log("Health check ping received at:", new Date().toISOString()); 
-  res.status(200).json({ status: 'ok', message: 'Backend is alive!' });
+app.get("/healthcheck", (req, res) => {
+  console.log("Health check ping received at:", new Date().toISOString());
+  res.status(200).json({ status: "ok", message: "Backend is alive!" });
 });
 
 app.use("/api/auth/", authRoutes);
