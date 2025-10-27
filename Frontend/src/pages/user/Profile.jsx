@@ -9,7 +9,7 @@ import OrderSummary from "../../components/OrderSummary";
 import LoadingComponent from "../../components/LoadingComponent";
 import { handleLogout } from "../../utilities/authUtils";
 const apiUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-
+const { authState } = useAuth();
 function Profile() {
   const [activeBtn, setActiveBtn] = useState("liked");
   const [likedReels, setLikedReels] = useState([]);
