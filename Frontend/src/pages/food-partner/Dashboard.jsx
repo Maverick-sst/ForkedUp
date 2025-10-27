@@ -445,7 +445,7 @@ function Dashboard() {
       <button
         onClick={() => {
           if (window.confirm("Are you sure you want to logout?")) {
-            handleLogout(navigate);
+            handleLogout(navigate,authState.role);
           }
         }}
         className="absolute top-3 right-3 z-30 px-3 py-1 bg-red-500 text-white rounded-lg shadow-md hover:bg-red-600 transition-colors flex items-center gap-1 text-xs font-medium"
